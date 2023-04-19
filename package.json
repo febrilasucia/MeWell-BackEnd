@@ -1,0 +1,32 @@
+{
+  "name": "backend-mental-hack",
+  "version": "1.0.0",
+  "description": "Mental Hack API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app",
+    "dev": "nodemon app"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Skilvul-Backend-3/Backend-Mental-Hack.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Skilvul-Backend-3/Backend-Mental-Hack/issues"
+  },
+  "homepage": "https://github.com/Skilvul-Backend-3/Backend-Mental-Hack#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "body-parser": "^1.20.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-fileupload": "^1.4.0",
+    "express-session": "^1.17.3",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.7.3"
+  }
+}
