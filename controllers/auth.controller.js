@@ -4,33 +4,55 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 module.exports = {
-  Register: async (req, res) => {
-    // get body
-    let { name, email, password, confPassword } = req.body;
-    // if password not match
-    if (password !== confPassword)
+  register: async (req, res) => {
+    // Get body data
+    let {
+      name,
+      email,
+      password,
+      confPassword,
+      dateOfBirth,
+      gender,
+      age,
+      work,
+      hobbies,
+    } = req.body;
+
+    // Check if password and confirm password match
+    if (password !== confPassword) {
       return res
         .status(400)
-        .json({ message: 'Password dan Confirm Password tidak cocok' });
-    // hash pass
+        .json({ message: 'Password and Confirm Password do not match' });
+    }
+
+    // Hash password
     const saltRounds = 10;
     const hash = bcrypt.hashSync(password, saltRounds);
     password = hash;
-    // create new user
+
+    // Create new user
     const role = 'user';
-    const profile_url = `${req.protocol}://${req.get(
-      'host'
-    )}/images/default.jpg`;
-    const user = new User({ name, email, password, role, profile_url });
-    // save & res
+    const profileUrl = `${req.protocol}://${req.get('host')}/images/default.jpg`;
+    const user = new User({
+      name,
+      email,
+      password,
+      role,
+      profileUrl,
+      dateOfBirth,
+      gender,
+      age,
+      work,
+      hobbies,
+    });
+
     try {
-      const inserteduser = await user.save();
-      res.status(201).json(inserteduser);
+      // Save user to the database
+      const insertedUser = await user.save();
+      res.status(201).json(insertedUser);
     } catch (error) {
-      if (error.code == 11000) {
-        res.status(400).json({
-          message: 'Email telah terdaftar',
-        });
+      if (error.code === 11000) {
+        res.status(400).json({ message: 'Email already registered' });
       } else {
         res.status(400).json({ message: error.message });
       }
@@ -76,7 +98,7 @@ module.exports = {
   },
 
   Logout: async (req, res) => {
-    localStorage.removeItem('token')
+    localStorage.removeItem('token');
     req.session.destroy((err) => {
       if (err) return res.status(400).json({ msg: 'Tidak dapat logout' });
       res.status(200).json({ msg: 'Anda telah logout' });

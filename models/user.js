@@ -1,36 +1,59 @@
-const { default: mongoose, Schema } = require('mongoose');
+const { Schema, model } = require('mongoose');
 
 const userSchema = new Schema({
   name: {
     type: String,
-    required: [true, 'name is required'],
+    required: [true, 'Name is required'],
   },
   email: {
     type: String,
     trim: true,
     lowercase: true,
     unique: true,
-    required: [true, 'email is required'],
+    required: [true, 'Email is required'],
     match: [
       /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-      'Please fill a valid email address',
+      'Please provide a valid email address',
     ],
   },
   password: {
     type: String,
-    required: [true, 'password is required'],
+    required: [true, 'Password is required'],
     trim: true,
   },
   role: {
     type: String,
     enum: ['user', 'admin'],
-    required: [true, 'role is required'],
+    default: 'user',
+    required: [true, 'Role is required'],
   },
-  profile_url: {
+  profileUrl: {
+    type: String,
+    default: function () {
+      const req = this instanceof mongoose.Document ? this.$__.req : undefined;
+      if (req) {
+        return `${req.protocol}://${req.get('host')}/images/default.jpg`;
+      }
+      return undefined;
+    },
+  },
+  dateOfBirth: {
+    type: String,
+  },
+  gender: {
+    type: String,
+  },
+  age: {
+    type: Number,
+  },
+  work: {
+    type: String,
+  },
+  hobbies: {
     type: String,
   },
 });
 
-const User = mongoose.model('User', userSchema);
+const User = model('User', userSchema);
 
 module.exports = User;
