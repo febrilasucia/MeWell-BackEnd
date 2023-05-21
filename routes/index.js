@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 
-const videoRouter = require("./video.router");
+const videoRouter = require('./video.router');
 const userRouter = require('./user.router');
 const authRouter = require('./auth.router');
 const blogRouter = require('./blog.router');
-const faqRouter = require('./faq.route')
+const faqRouter = require('./faq.route');
+const kepribadianRouter = require('./kepribadian.router');
 
 router.get('/', (req, res) => {
   res.send('<h1></h1>Welcome To Mental Hack API</h1>');
@@ -13,9 +14,9 @@ router.get('/', (req, res) => {
 
 router.use('/auth', authRouter);
 router.use('/users', userRouter);
-router.use('/blog',blogRouter);
-router.use("/video", videoRouter);
-router.use("/faq", faqRouter);
-
+router.use('/blog', blogRouter);
+router.use('/video', videoRouter);
+router.use('/faq', faqRouter);
+router.use('/kepribadian', kepribadianRouter);
 
 module.exports = router;

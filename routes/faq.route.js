@@ -9,6 +9,7 @@ const router = express.Router();
 const { verifyToken, adminOnly } = require('../middleware/authUser');
 
 router.get('/', getFaqs);
+// * admin
 router.post('/', verifyToken, adminOnly, addFaq);
 router.patch('/:id', verifyToken, adminOnly, updateFaq);
 router.delete('/:id', verifyToken, adminOnly, deleteFaq);

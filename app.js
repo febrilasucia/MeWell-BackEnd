@@ -26,15 +26,16 @@ app.use(
     },
   })
 );
-app.use(
-  cors({
-    credentials: true,
-    origin: [
-      'https://final-project-fe-mental-hack.vercel.app',
-      'http://127.0.0.1:5173',
-    ],
-  })
-);
+app.use(cors());
+// app.use(
+//   cors({
+//     credentials: true,
+//     origin: [
+//       'https://final-project-fe-mental-hack.vercel.app',
+//       'http://127.0.0.1:5173',
+//     ],
+//   })
+// );
 app.use(express.json());
 app.use(FileUpload());
 app.use(express.static('public'));
