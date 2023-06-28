@@ -6,12 +6,12 @@ const {
   deleteFaq,
 } = require('../controllers/faq.controller');
 const router = express.Router();
-const { verifyToken, adminOnly } = require('../middleware/authUser');
+const { verifyToken, authorizeRoles } = require('../middleware/authUser');
 
 router.get('/', getFaqs);
 // * admin
-router.post('/', verifyToken, adminOnly, addFaq);
-router.patch('/:id', verifyToken, adminOnly, updateFaq);
-router.delete('/:id', verifyToken, adminOnly, deleteFaq);
+router.post('/', verifyToken, authorizeRoles(['admin']), addFaq);
+router.patch('/:id', verifyToken, authorizeRoles(['admin']), updateFaq);
+router.delete('/:id', verifyToken, authorizeRoles(['admin']), deleteFaq);
 
 module.exports = router;

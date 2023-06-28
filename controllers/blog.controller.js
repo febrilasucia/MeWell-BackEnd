@@ -1,14 +1,20 @@
 const Blog = require('../models/blogs');
 const User = require('../models/user');
+const cheerio = require('cheerio');
+const path = require('path');
+const fs = require('fs');
 
 module.exports = {
   getAllBlog: async (req, res) => {
     let { title = false } = req.query;
-
+    console.log(req.user);
     try {
       // execute query with page, limit, and filter values
       let blog = await Blog.find({}, '-__v')
-        .populate('createdBy', '-__v -email -password -role -_id -profile_url')
+        .populate(
+          'createdBy',
+          '-__v -email, -password, -dateOfBirth, -gender, -age, -work, -hobbies'
+        )
         .exec();
       if (title) {
         blog = await Blog.find({
@@ -43,17 +49,40 @@ module.exports = {
     }
   },
 
-  // filesatck
-  postBlog: async (req, res) => {
-    const data = req.body;
-    const blog = await Blog(data);
+  createBlog: async (req, res) => {
+    const { title, author, content } = req.body;
+    const createdBy = req.user._id;
+
+    // Mengubah tag <img> dengan atribut src Base64 menjadi tautan gambar yang valid
+    const $ = cheerio.load(content);
+    $('img').each((index, element) => {
+      const base64Data = $(element).attr('src').split(';base64,').pop();
+      const imageExtension = $(element).attr('src').split('/')[1].split(';')[0];
+      const imageFileName = `image_${Date.now()}.${imageExtension}`;
+      const imagePath = path.join(
+        __dirname,
+        '..',
+        'public',
+        'images',
+        imageFileName
+      );
+
+      // Menyimpan gambar ke server
+      fs.writeFileSync(imagePath, base64Data, { encoding: 'base64' });
+
+      // Mengubah atribut src menjadi tautan gambar yang valid
+      $(element).attr('src', `/images/${imageFileName}`);
+    });
+
+    const newBlog = new Blog({ title, author, content: $.html(), createdBy });
 
     try {
-      saveBlog = await Blog.create(blog);
-      res.status(200).json(saveBlog);
+      const savedBlog = await newBlog.save();
+      res.status(200).json(savedBlog);
     } catch (error) {
       res.status(404).json({
-        message: 'error',
+        message: 'Error',
+        error: error.message,
       });
     }
   },

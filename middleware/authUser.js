@@ -1,3 +1,5 @@
+const ConfigAuth = require('../config/ConfigAuth');
+const Auth = require('../config/ConfigAuth');
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
@@ -7,30 +9,40 @@ module.exports = {
     // get token
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    if (token == null) return res.sendStatus(401);
+    console.log(authHeader);
+    console.log(token);
+    // if (token == null) return res.sendStatus(401);
     // cek token lagi
     if (!token) {
       return res.status(401).json({ msg: 'Mohon login ke akun anda!' });
     }
     // verify token
-    jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+    jwt.verify(token, ConfigAuth.jwt_secret, (err, decoded) => {
       if (err) return res.sendStatus(403);
+      req.user = decoded;
       next();
     });
   },
-  adminOnly: async (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    var decoded = jwt.verify(token, process.env.SECRET_KEY);
-    const user = await User.findOne({
-      _id: decoded.id,
-    });
-    if (!user)
-      return res
-        .status(404)
-        .json({ message: 'User tidak ditemukan, silakan login sebagai admin' });
-    if (user.role != 'admin')
-      return res.status(403).json({ message: 'Akses terlarang' });
-    next();
+  authorizeRoles: (roles) => {
+    // role: admin, user, event_organizer, musisi
+    return (req, res, next) => {
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+      }
+      try {
+        const decoded = jwt.verify(token, Auth.jwt_secret);
+        const { role } = decoded;
+        if (!roles.includes(role)) {
+          return res.status(403).json({ message: 'Unauthorized' });
+        }
+        req.user = decoded; // Menyimpan data user pada objek req
+        next();
+      } catch (error) {
+        console.log(error);
+        return res.status(401).json({ message: 'Invalid token' });
+      }
+    };
   },
 };

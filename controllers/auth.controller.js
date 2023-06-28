@@ -2,6 +2,8 @@ const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const configAuth = require('../config/ConfigAuth.js');
+const ConfigAuth = require('../config/ConfigAuth.js');
 
 module.exports = {
   register: async (req, res) => {
@@ -32,7 +34,9 @@ module.exports = {
 
     // Create new user
     const role = 'user';
-    const profileUrl = `${req.protocol}://${req.get('host')}/images/default.jpg`;
+    const profileUrl = `${req.protocol}://${req.get(
+      'host'
+    )}/images/default.jpg`;
     const user = new User({
       name,
       email,
@@ -58,10 +62,50 @@ module.exports = {
       }
     }
   },
-  Login: async (req, res) => {
+  Login2: async (req, res) => {
+    const { email, password } = req.body;
+
     try {
-      // get body
-      const { email, password } = req.body;
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: 'Email or password is incorrect' });
+      }
+      console.log(user);
+
+      if (!user.isVerified) {
+        return res.status(403).json({
+          error: 'Email is not verified, please verify it before logging in',
+        });
+      }
+
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (!isMatch) {
+        return res.status(401).json({ error: 'Invalid email or password' });
+      }
+
+      const token = jwt.sign(
+        { id: user._id, name: user.name, email: user.email, role: user.role },
+        configAuth.jwt_secret,
+        { expiresIn: '1d' }
+      );
+
+      res.json({ message: 'Logged in successfully', token });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        error: 'An internal server error occurred',
+        message: err.message,
+      });
+    }
+  },
+  Login: async (req, res) => {
+    // get body
+    const { email, password } = req.body;
+    try {
       // findone
       const userData = await User.findOne({ email }).exec();
       // if not found
@@ -81,7 +125,7 @@ module.exports = {
           email: userData.email,
           role: userData.role,
         },
-        process.env.SECRET_KEY
+        ConfigAuth.jwt_secret
       );
       // success login
       if (userData) {
@@ -108,7 +152,7 @@ module.exports = {
   Me: async (req, res) => {
     const { token } = req.body;
     try {
-      let { id, name, email, role } = jwt.verify(token, process.env.SECRET_KEY);
+      let { id, name, email, role } = jwt.verify(token, ConfigAuth.jwt_secret);
       let user = await User.findById({ _id: id });
       res.status(200).json({ id, name, email, role, photo: user.profile_url });
     } catch (error) {

@@ -52,6 +52,10 @@ const userSchema = new Schema({
   hobbies: {
     type: String,
   },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const User = model('User', userSchema);
