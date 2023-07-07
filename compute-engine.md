@@ -107,3 +107,7 @@ Konfigurasi ini akan membuat Nginx mendengarkan pada port 80 dan meneruskan lalu
 ```
 sudo systemctl restart nginx
 ```
+
+# configurasi ssl certificate dari certbot
+
+https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-20-04

@@ -9,8 +9,6 @@ module.exports = {
     // get token
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    console.log(authHeader);
-    console.log(token);
     // if (token == null) return res.sendStatus(401);
     // cek token lagi
     if (!token) {
@@ -19,7 +17,6 @@ module.exports = {
     // verify token
     jwt.verify(token, ConfigAuth.jwt_secret, (err, decoded) => {
       if (err) return res.sendStatus(403);
-      req.user = decoded;
       next();
     });
   },
