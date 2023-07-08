@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose');
+const { default:mongoose,Schema, model } = require('mongoose');
 
 const userSchema = new Schema({
   name: {
@@ -47,9 +47,6 @@ const userSchema = new Schema({
     type: Number,
   },
   work: {
-    type: String,
-  },
-  hobbies: {
     type: String,
   },
   isVerified: {

@@ -18,11 +18,11 @@ const blogSchema = new Schema({
     type: String,
     require: true,
   },
-  CreatedAt: {
+  createdAt: {
     type: Date,
     default: Date.now(),
   },
-  UpdatedAt: {
+  updatedAt: {
     type: Date,
     default: Date.now(),
   },
