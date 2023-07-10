@@ -1,64 +1,42 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const videoSchema = new Schema({
-  videoId: {
+  title: {
     type: String,
     require: true,
   },
-  judul: {
+  videoLink: {
     type: String,
     require: true,
   },
-  deskripsi: {
+  description: {
     type: String,
     require: true,
   },
-  tanggalUpload: {
+  author: {
+    type: String,
+    require: true,
+  },
+  content: {
+    type: String,
+    require: true,
+  },
+  createdAt: {
     type: Date,
     default: Date.now(),
   },
-
-  comment: [
-    {
-      commentContent: {
-        type: String,
-      },
-      postedBy: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-      },
-      dateCreated: {
-        type: Date,
-        default: Date.now(),
-      },
-    },
-  ],
-
-  // comment: [
-  //   {
-  //     type: Schema.Types.ObjectId,
-  //     ref: "Comment",
-  //   },
-  // ],
+  updatedAt: {
+    type: Date,
+    default: Date.now(),
+  },
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    require: true,
+  },
 });
 
-// const commentSchema = new Schema({
-//   commentContent: {
-//     type: String,
-//   },
-//   postedBy: {
-//     type: Schema.Types.ObjectId,
-//     ref: "User",
-//   },
-//   dateCreated: {
-//     type: Date,
-//     default: Date.now(),
-//   },
-// });
-
-const Video = mongoose.model('Video', videoSchema);
-// const Comment = mongoose.model("Comment", commentSchema);
+const Video = mongoose.model("Video", videoSchema);
 
 module.exports = Video;
-// module.exports = Comment;
