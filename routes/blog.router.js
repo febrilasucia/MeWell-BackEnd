@@ -20,8 +20,4 @@ router.get('/:id', getBlogById);
 router.post('/', verifyToken, authorizeRoles(['admin']), createBlog);
 router.patch('/:id', verifyToken, authorizeRoles(['admin']), updateBlog);
 router.delete('/:id', verifyToken, authorizeRoles(['admin']), deleteBlog);
-router.post('/:id/comment', verifyToken, postComment);
-router.get('/:id/comment', getAllBlogCommentById);
-router.delete('/:id/comment/:idComment', verifyToken, deleteBlogCommentById);
-router.patch('/:id/comment/:idComment', verifyToken, updateCommentById);
 module.exports = router;

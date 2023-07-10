@@ -4,6 +4,10 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const configAuth = require('../config/ConfigAuth.js');
 const ConfigAuth = require('../config/ConfigAuth.js');
+const {
+  sendVerificationEmail,
+} = require('../middleware/sendVerifycationEmail');
+const { decryptID } = require('../helpers/encryptedID');
 
 module.exports = {
   register: async (req, res) => {
@@ -17,7 +21,6 @@ module.exports = {
       gender,
       age,
       work,
-      hobbies,
     } = req.body;
 
     // Check if password and confirm password match
@@ -47,13 +50,16 @@ module.exports = {
       gender,
       age,
       work,
-      hobbies,
     });
 
     try {
       // Save user to the database
       const insertedUser = await user.save();
-      res.status(201).json(insertedUser);
+      // Assume sendVerificationEmail function is defined and works correctly
+      await sendVerificationEmail(email, insertedUser._id);
+      res
+        .status(201)
+        .json({ message: 'Registration is successful, please verify email' });
     } catch (error) {
       if (error.code === 11000) {
         res.status(400).json({ message: 'Email already registered' });
@@ -67,24 +73,21 @@ module.exports = {
 
     try {
       const user = await User.findOne({ email });
-
       if (!user) {
         return res
           .status(401)
-          .json({ error: 'Email or password is incorrect' });
+          .json({ message: 'Email or password is invalid' });
       }
-      console.log(user);
-
-      if (!user.isVerified) {
-        return res.status(403).json({
-          error: 'Email is not verified, please verify it before logging in',
-        });
-      }
-
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (!isMatch) {
-        return res.status(401).json({ error: 'Invalid email or password' });
+        return res.status(401).json({ message: 'Password is not correct' });
+      }
+
+      if (!user.isVerified) {
+        return res.status(403).json({
+          message: 'Email is not verified, please verify it before logging in',
+        });
       }
 
       const token = jwt.sign(
@@ -140,12 +143,49 @@ module.exports = {
       });
     }
   },
+  verify: async (req, res) => {
+    const { id } = req.params;
 
+    try {
+      const id2 = decryptID(id);
+      const user = await User.findById(id2);
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      user.isVerified = true;
+      await user.save();
+
+      res.json({ message: 'Email verified successfully' });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: 'An internal server error occurred' });
+    }
+  },
+  resendVerification: async (req, res) => {
+    const { email } = req.body;
+
+    try {
+      const user = await User.findOne({ where: { email } });
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      await sendVerificationEmail(email, user.id);
+
+      res.json({ message: 'Verification email has been resent' });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: 'An internal server error occurred' });
+    }
+  },
   Logout: async (req, res) => {
     localStorage.removeItem('token');
     req.session.destroy((err) => {
-      if (err) return res.status(400).json({ msg: 'Tidak dapat logout' });
-      res.status(200).json({ msg: 'Anda telah logout' });
+      if (err) return res.status(400).json({ message: 'Tidak dapat logout' });
+      res.status(200).json({ message: 'Anda telah logout' });
     });
   },
 

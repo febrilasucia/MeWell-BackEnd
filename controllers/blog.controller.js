@@ -9,11 +9,21 @@ const getImagesFromContent = (content) => {
   const $ = cheerio.load(content);
   const images = [];
 
-  $('img').each((index, element) => {
+  $('img[src^="/images/"]').each((index, element) => {
     const imageSrc = $(element).attr('src');
-    if (imageSrc.startsWith('/images/')) {
-      images.push(imageSrc);
-    }
+    images.push(imageSrc);
+  });
+
+  return images;
+};
+// Fungsi untuk mendapatkan daftar gambar dari konten blog
+const getImagesFromUpdatedContent = (content) => {
+  const $ = cheerio.load(content);
+  const images = [];
+
+  $('img[src^="http://localhost:5000/images/"]').each((index, element) => {
+    const imageSrc = $(element).attr('src');
+    images.push(imageSrc);
   });
 
   return images;
@@ -28,6 +38,37 @@ const deleteImages = (images) => {
       fs.unlinkSync(imagePath);
     }
   });
+};
+
+const checkAndDeleteMissingImages = (originalContent, updatedContent) => {
+  const $ = cheerio.load(updatedContent);
+  const originalImages = getImagesFromContent(originalContent);
+  const updatedImages = getImagesFromUpdatedContent(updatedContent).map(
+    (image) => image.replace('http://localhost:5000', '')
+  );
+
+  const missingImages = [];
+
+  originalImages.forEach((image) => {
+    if (!updatedImages.includes(image)) {
+      // The image is missing in the updated content
+      missingImages.push(image);
+    }
+  });
+
+  // Delete the missing images
+  missingImages.forEach((image) => {
+    const imagePath = path.join(__dirname, '..', 'public', image);
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+  });
+};
+
+let imageCounter = 0;
+
+const getNextImageCounter = () => {
+  return ++imageCounter;
 };
 
 module.exports = {
@@ -86,7 +127,7 @@ module.exports = {
     $('img').each((index, element) => {
       const base64Data = $(element).attr('src').split(';base64,').pop();
       const imageExtension = $(element).attr('src').split('/')[1].split(';')[0];
-      const imageFileName = `image_${Date.now()}.${imageExtension}`;
+      const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
       const imagePath = path.join(
         __dirname,
         '..',
@@ -124,39 +165,27 @@ module.exports = {
   updateBlog: async (req, res) => {
     const { title, description, author, content } = req.body;
     const blogId = req.params.id;
+    const updatedBy = req.user.id;
 
-    try {
-      // Cek apakah blog dengan ID yang diberikan ada di database
-      const blog = await Blog.findById(blogId);
-      if (!blog) {
-        return res.status(404).json({ message: 'Blog not found' });
-      }
+    // Validasi jumlah kata dalam deskripsi
+    const wordCount = description.trim().split(' ').length;
+    if (wordCount > 50) {
+      return res
+        .status(400)
+        .json({ message: 'Deskripsi melebihi batas maksimum kata.' });
+    }
 
-      // Validasi jumlah kata dalam deskripsi
-      const wordCount = description.trim().split(' ').length;
-      if (wordCount > 50) {
-        return res
-          .status(400)
-          .json({ message: 'Deskripsi melebihi batas maksimum kata.' });
-      }
+    // Mengubah tag <img> dengan atribut src Base64 menjadi tautan gambar yang valid
+    const $ = cheerio.load(content);
 
-      // Menghapus gambar-gambar yang tidak digunakan dalam konten blog yang baru
-      const previousImages = getImagesFromContent(blog.content);
-      const updatedImages = getImagesFromContent(content);
-      const unusedImages = previousImages.filter(
-        (image) => !updatedImages.includes(image)
-      );
-      deleteImages(unusedImages);
+    $('img').each((index, element) => {
+      const imageSrc = $(element).attr('src');
 
-      // Mengubah tag <img> dengan atribut src Base64 menjadi tautan gambar yang valid
-      const $ = cheerio.load(content);
-      $('img').each((index, element) => {
-        const base64Data = $(element).attr('src').split(';base64,').pop();
-        const imageExtension = $(element)
-          .attr('src')
-          .split('/')[1]
-          .split(';')[0];
-        const imageFileName = `image_${Date.now()}.${imageExtension}`;
+      // Periksa apakah gambar adalah gambar dengan format base64
+      if (imageSrc.startsWith('data:image')) {
+        const base64Data = imageSrc.split(';base64,').pop();
+        const imageExtension = imageSrc.split('/')[1].split(';')[0];
+        const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
         const imagePath = path.join(
           __dirname,
           '..',
@@ -170,21 +199,36 @@ module.exports = {
 
         // Mengubah atribut src menjadi tautan gambar yang valid
         $(element).attr('src', `/images/${imageFileName}`);
-      });
+      }
+    });
 
-      // Update data blog
-      blog.title = title;
-      blog.description = description;
-      blog.author = author;
-      blog.content = $.html();
+    const updatedBlog = {
+      title,
+      description,
+      author,
+      content: $.html(),
+      updatedBy,
+    };
 
-      const updatedBlog = await blog.save();
-      res.status(200).json(updatedBlog);
+    try {
+      const blog = await Blog.findById(blogId);
+      if (!blog) {
+        return res.status(404).json({ message: 'Blog not found.' });
+      }
+
+      // Check and delete missing images
+      const originalContent = blog.content;
+      checkAndDeleteMissingImages(originalContent, $.html());
+
+      // Mengupdate blog dengan data yang baru
+      await Blog.findByIdAndUpdate(blogId, updatedBlog);
+
+      res.status(200).json({ message: 'Blog updated successfully.' });
     } catch (error) {
-      res.status(500).json({
-        message: 'Error',
-        error: error.message,
-      });
+      console.log(error);
+      res
+        .status(500)
+        .json({ message: 'Error updating blog.', error: error.message });
     }
   },
 
@@ -221,92 +265,6 @@ module.exports = {
       res.status(500).json({
         message: 'Terjadi kesalahan saat menghapus blog.',
         error: error.message,
-      });
-    }
-  },
-
-  postComment: async (req, res) => {
-    const { id } = req.params;
-    const data = req.body;
-    console.log(data);
-    if (!data) {
-      res.status(400).json({
-        message: 'Comment harus diisi',
-      });
-      return;
-    }
-
-    try {
-      const blog = await Blog.findByIdAndUpdate(id, {
-        $push: {
-          comment: data,
-        },
-      });
-      await blog.save();
-      res.status(200).json({
-        message: 'success',
-      });
-    } catch (error) {
-      res.status(404).json({
-        message: 'error',
-      });
-    }
-  },
-  getAllBlogCommentById: async (req, res) => {
-    const { id } = req.params;
-    const blog = await Blog.findById(
-      id,
-      '-image -title -subTitle -description -dateCreated -createdBy'
-    ).populate(
-      'comment.postedBy',
-      '-_id -email -password -role -profile_url -__v'
-    );
-    console.log(blog);
-    try {
-      res.status(200).json(blog);
-    } catch (error) {
-      res.status(500).json({
-        message: 'error',
-      });
-    }
-  },
-
-  updateCommentById: async (req, res) => {
-    const { idComment } = req.params;
-    const data = req.body;
-    try {
-      const upComment = await Blog.findoneAndUpdate(idComment, {
-        $push: {
-          comment: data,
-        },
-      });
-      await upComment.save();
-
-      res.status(200).json({
-        message: 'success',
-      });
-    } catch (error) {
-      res.status(404).json({
-        message: 'error',
-      });
-    }
-  },
-
-  deleteBlogCommentById: async (req, res) => {
-    const { id, idComment } = req.params;
-    try {
-      const blog = await Blog.findByIdAndUpdate(id, {
-        $pull: {
-          comment: { _id: idComment },
-        },
-      });
-      await blog.save();
-      res.status(200).json({
-        message: 'success',
-      });
-    } catch (error) {
-      res.status(404).json({
-        message: 'error',
       });
     }
   },
