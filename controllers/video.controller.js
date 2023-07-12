@@ -1,5 +1,64 @@
 const { response } = require("express");
 const Video = require("../models/video");
+const cheerio = require("cheerio");
+const path = require("path");
+const fs = require("fs");
+
+// Fungsi untuk mendapatkan daftar gambar dari konten blog
+const getImagesFromContent = (content) => {
+  const $ = cheerio.load(content);
+  const images = [];
+
+  $('img[src^="/images/"]').each((index, element) => {
+    const imageSrc = $(element).attr("src");
+    images.push(imageSrc);
+  });
+
+  return images;
+};
+// Fungsi untuk mendapatkan daftar gambar dari konten blog
+const getImagesFromUpdatedContent = (content) => {
+  const $ = cheerio.load(content);
+  const images = [];
+
+  $('img[src^="http://localhost:5000/images/"]').each((index, element) => {
+    const imageSrc = $(element).attr("src");
+    images.push(imageSrc);
+  });
+
+  return images;
+};
+
+const checkAndDeleteMissingImages = (originalContent, updatedContent) => {
+  const $ = cheerio.load(updatedContent);
+  const originalImages = getImagesFromContent(originalContent);
+  const updatedImages = getImagesFromUpdatedContent(updatedContent).map(
+    (image) => image.replace("http://localhost:5000", "")
+  );
+
+  const missingImages = [];
+
+  originalImages.forEach((image) => {
+    if (!updatedImages.includes(image)) {
+      // The image is missing in the updated content
+      missingImages.push(image);
+    }
+  });
+
+  // Delete the missing images
+  missingImages.forEach((image) => {
+    const imagePath = path.join(__dirname, "..", "public", image);
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+  });
+};
+
+let imageCounter = 0;
+
+const getNextImageCounter = () => {
+  return ++imageCounter;
+};
 
 module.exports = {
   getAllVideo: async (req, res) => {
@@ -86,18 +145,71 @@ module.exports = {
   },
 
   updateVideoById: async (req, res) => {
-    const { id } = req.params;
-    const data = req.body;
+    const { title, videoLink, description, author, content } = req.body;
+    const videoId = req.params.id;
+    const updatedBy = req.user.id;
 
-    const video = await Video.findByIdAndUpdate(id, data);
+    const wordCount = description.trim().split(" ").length;
+    if (wordCount > 50) {
+      return res
+        .status(400)
+        .json({ message: "Deskripsi melebihi batas maksimum kata." });
+    }
 
-    await video.save();
+    const $ = cheerio.load(content);
 
-    res.status(200).json({
-      message: "Data berhasil diupdate!",
+    $("img").each((index, element) => {
+      const imageSrc = $(element).attr("src");
+
+      // Periksa apakah gambar adalah gambar dengan format base64
+      if (imageSrc.startsWith("data:image")) {
+        const base64Data = imageSrc.split(";base64,").pop();
+        const imageExtension = imageSrc.split("/")[1].split(";")[0];
+        const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
+        const imagePath = path.join(
+          __dirname,
+          "..",
+          "public",
+          "images",
+          imageFileName
+        );
+
+        // Menyimpan gambar ke server
+        fs.writeFileSync(imagePath, base64Data, { encoding: "base64" });
+
+        // Mengubah atribut src menjadi tautan gambar yang valid
+        $(element).attr("src", `/images/${imageFileName}`);
+      }
     });
 
-    video.save();
+    const updatedVideo = {
+      title,
+      videoLink,
+      description,
+      author,
+      content: $.html(),
+      updatedBy,
+    };
+
+    console.log(updatedVideo);
+
+    try {
+      const video = await Video.findById(videoId);
+      if (!video) {
+        return res.status(404).json({ message: "Video not found." });
+      }
+
+      const originalContent = video.content;
+      checkAndDeleteMissingImages(originalContent, $.html());
+      await Video.findByIdAndUpdate(videoId, updatedVideo);
+
+      res.status(200).json({ message: "Video updated successfull" });
+    } catch (error) {
+      console.log(error);
+      res
+        .status(500)
+        .json({ message: "Error updating video.", error: error.message });
+    }
   },
 
   deleteVideoById: async (req, res) => {
