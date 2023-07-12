@@ -21,6 +21,7 @@ const konsulSchema = new Schema({
   gender: {
     type: String,
     require: true,
+    enum: ["L", "P"],
   },
   no_wa: {
     type: String,
