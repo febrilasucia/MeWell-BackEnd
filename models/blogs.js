@@ -18,6 +18,14 @@ const blogSchema = new Schema({
     type: String,
     require: true,
   },
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    require: true,
+  },
+  thumbnail: {
+    type: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now(),
@@ -25,11 +33,6 @@ const blogSchema = new Schema({
   updatedAt: {
     type: Date,
     default: Date.now(),
-  },
-  createdBy: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    require: true,
   },
 });
 

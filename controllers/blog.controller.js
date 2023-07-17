@@ -1,8 +1,8 @@
 const Blog = require('../models/blogs');
-const User = require('../models/user');
 const cheerio = require('cheerio');
 const path = require('path');
 const fs = require('fs');
+const upload = require('../middleware/multerConfig');
 
 // Fungsi untuk mendapatkan daftar gambar dari konten blog
 const getImagesFromContent = (content) => {
@@ -111,55 +111,84 @@ module.exports = {
   },
 
   createBlog: async (req, res) => {
-    const { title, description, author, content } = req.body;
-    const createdBy = req.user.id;
+    upload.single('thumbnail')(req, res, async function (err) {
+      const { title, description, author, content } = req.body;
+      const createdBy = req.user.id;
+      if (err) {
+        console.error(err);
+        return res.status(400).json({ error: err.message });
+      }
 
-    // Validasi jumlah kata dalam deskripsi
-    const wordCount = description.trim().split(' ').length;
-    if (wordCount > 50) {
-      return res
-        .status(400)
-        .json({ message: 'Deskripsi melebihi batas maksimum kata.' });
-    }
+      // Get the thumbnail image file
+      const thumbnailFile = req.file;
+      console.log(thumbnailFile);
+      console.log(description);
 
-    // Mengubah tag <img> dengan atribut src Base64 menjadi tautan gambar yang valid
-    const $ = cheerio.load(content);
-    $('img').each((index, element) => {
-      const base64Data = $(element).attr('src').split(';base64,').pop();
-      const imageExtension = $(element).attr('src').split('/')[1].split(';')[0];
-      const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
-      const imagePath = path.join(
-        __dirname,
-        '..',
-        'public',
-        'images',
-        imageFileName
-      );
+      // Validasi jumlah kata dalam deskripsi
+      const wordCount = description.trim().split(' ').length;
+      if (wordCount > 50) {
+        // Delete the uploaded thumbnail image if the description exceeds the word limit
+        if (thumbnailFile) {
+          fs.unlinkSync(thumbnailFile.path);
+        }
+        return res
+          .status(400)
+          .json({ message: 'Deskripsi melebihi batas maksimum kata.' });
+      }
 
-      // Menyimpan gambar ke server
-      fs.writeFileSync(imagePath, base64Data, { encoding: 'base64' });
+      // Mengubah tag <img> dengan atribut src Base64 menjadi tautan gambar yang valid
+      const $ = cheerio.load(content);
+      $('img').each((index, element) => {
+        const base64Data = $(element).attr('src').split(';base64,').pop();
+        const imageExtension = $(element)
+          .attr('src')
+          .split('/')[1]
+          .split(';')[0];
+        const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
+        const imagePath = path.join(
+          __dirname,
+          '..',
+          'public',
+          'images',
+          imageFileName
+        );
 
-      // Mengubah atribut src menjadi tautan gambar yang valid
-      $(element).attr('src', `/images/${imageFileName}`);
-    });
+        // Menyimpan gambar ke server
+        fs.writeFileSync(imagePath, base64Data, { encoding: 'base64' });
 
-    const newBlog = new Blog({
-      title,
-      description,
-      author,
-      content: $.html(),
-      createdBy,
-    });
-
-    try {
-      const savedBlog = await newBlog.save();
-      res.status(200).json(savedBlog);
-    } catch (error) {
-      res.status(404).json({
-        message: 'Error',
-        error: error.message,
+        // Mengubah atribut src menjadi tautan gambar yang valid
+        $(element).attr('src', `/images/${imageFileName}`);
       });
-    }
+
+      // Set the thumbnail image path in the blog data
+      let thumbnailImagePath = '';
+      if (thumbnailFile) {
+        thumbnailImagePath = `/thumbnails/${thumbnailFile.filename}`;
+      }
+
+      const newBlog = new Blog({
+        title,
+        description,
+        author,
+        content: $.html(),
+        thumbnail: thumbnailImagePath,
+        createdBy,
+      });
+
+      try {
+        const savedBlog = await newBlog.save();
+        res.status(200).json(savedBlog);
+      } catch (error) {
+        // Delete the uploaded thumbnail image if there is an error
+        if (thumbnailFile) {
+          fs.unlinkSync(thumbnailFile.path);
+        }
+        res.status(404).json({
+          message: 'Error',
+          error: error.message,
+        });
+      }
+    });
   },
 
   updateBlog: async (req, res) => {
