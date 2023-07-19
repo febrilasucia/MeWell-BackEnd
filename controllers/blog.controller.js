@@ -192,79 +192,103 @@ module.exports = {
   },
 
   updateBlog: async (req, res) => {
-    const { title, description, author, content } = req.body;
-    const blogId = req.params.id;
-    const updatedBy = req.user.id;
+    upload.single('thumbnail')(req, res, async function (err) {
+      const { title, description, author, content } = req.body;
+      const blogId = req.params.id;
+      const updatedBy = req.user.id;
 
-    // Validasi jumlah kata dalam deskripsi
-    const wordCount = description.trim().split(' ').length;
-    if (wordCount > 50) {
-      return res
-        .status(400)
-        .json({ message: 'Deskripsi melebihi batas maksimum kata.' });
-    }
+      // Validasi jumlah kata dalam deskripsi
+      const wordCount = description.trim().split(' ').length;
+      if (wordCount > 50) {
+        return res
+          .status(400)
+          .json({ message: 'Deskripsi melebihi batas maksimum kata.' });
+      }
 
-    // Mengubah tag <img> dengan atribut src Base64 menjadi tautan gambar yang valid
-    const $ = cheerio.load(content);
+      // Mengubah tag <img> dengan atribut src Base64 menjadi tautan gambar yang valid
+      const $ = cheerio.load(content);
 
-    $('img').each((index, element) => {
-      const imageSrc = $(element).attr('src');
+      $('img').each((index, element) => {
+        const imageSrc = $(element).attr('src');
 
-      // Periksa apakah gambar adalah gambar dengan format base64
-      if (imageSrc.startsWith('data:image')) {
-        const base64Data = imageSrc.split(';base64,').pop();
-        const imageExtension = imageSrc.split('/')[1].split(';')[0];
-        const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
-        const imagePath = path.join(
-          __dirname,
-          '..',
-          'public',
-          'images',
-          imageFileName
-        );
+        // Periksa apakah gambar adalah gambar dengan format base64
+        if (imageSrc.startsWith('data:image')) {
+          const base64Data = imageSrc.split(';base64,').pop();
+          const imageExtension = imageSrc.split('/')[1].split(';')[0];
+          const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
+          const imagePath = path.join(
+            __dirname,
+            '..',
+            'public',
+            'images',
+            imageFileName
+          );
 
-        // Menyimpan gambar ke server
-        fs.writeFileSync(imagePath, base64Data, { encoding: 'base64' });
+          // Menyimpan gambar ke server
+          fs.writeFileSync(imagePath, base64Data, { encoding: 'base64' });
 
-        // Mengubah atribut src menjadi tautan gambar yang valid
-        $(element).attr('src', `/images/${imageFileName}`);
+          // Mengubah atribut src menjadi tautan gambar yang valid
+          $(element).attr('src', `/images/${imageFileName}`);
+        }
+      });
+
+      // Get the thumbnail image file
+      const thumbnailFile = req.file;
+
+      // Set the thumbnail image path in the blog data
+      let thumbnailImagePath = '';
+      if (thumbnailFile) {
+        thumbnailImagePath = `/thumbnails/${thumbnailFile.filename}`;
+      }
+
+      const updatedBlog = {
+        title,
+        description,
+        author,
+        content: $.html(),
+        thumbnail: thumbnailImagePath,
+        updatedBy,
+      };
+
+      try {
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+          return res.status(404).json({ message: 'Blog not found.' });
+        }
+
+        // Delete the existing thumbnail image if the new thumbnail is uploaded
+        if (thumbnailFile && blog.thumbnail) {
+          const thumbnailPath = path.join(
+            __dirname,
+            '..',
+            'public',
+            blog.thumbnail.replace('/', '')
+          );
+          fs.unlinkSync(thumbnailPath);
+        }
+
+        // Check and delete missing images
+        const originalContent = blog.content;
+        checkAndDeleteMissingImages(originalContent, $.html());
+
+        // Mengupdate blog dengan data yang baru
+        await Blog.findByIdAndUpdate(blogId, updatedBlog);
+
+        res.status(200).json({ message: 'Blog updated successfully.' });
+      } catch (error) {
+        console.log(error);
+        if (thumbnailFile) {
+          fs.unlinkSync(thumbnailFile.path);
+        }
+        res
+          .status(500)
+          .json({ message: 'Error updating blog.', error: error.message });
       }
     });
-
-    const updatedBlog = {
-      title,
-      description,
-      author,
-      content: $.html(),
-      updatedBy,
-    };
-
-    try {
-      const blog = await Blog.findById(blogId);
-      if (!blog) {
-        return res.status(404).json({ message: 'Blog not found.' });
-      }
-
-      // Check and delete missing images
-      const originalContent = blog.content;
-      checkAndDeleteMissingImages(originalContent, $.html());
-
-      // Mengupdate blog dengan data yang baru
-      await Blog.findByIdAndUpdate(blogId, updatedBlog);
-
-      res.status(200).json({ message: 'Blog updated successfully.' });
-    } catch (error) {
-      console.log(error);
-      res
-        .status(500)
-        .json({ message: 'Error updating blog.', error: error.message });
-    }
   },
 
   deleteBlog: async (req, res) => {
     const { id } = req.params;
-    console.log(req.user);
-    console.log(req.user);
     const userId = req.user._id;
     const isAdmin = req.user.role === 'admin';
 
@@ -281,9 +305,20 @@ module.exports = {
         return res.status(404).json({ message: 'Blog tidak ditemukan.' });
       }
 
+      // Hapus gambar thumbnail yang terkait dengan blog
+      const thumbnailImage = blog.thumbnail;
+      if (thumbnailImage) {
+        const thumbnailPath = path.join(
+          __dirname,
+          '..',
+          'public',
+          thumbnailImage
+        );
+        fs.unlinkSync(thumbnailPath);
+      }
+
       // Hapus gambar yang terkait dengan blog jika ada
       const images = getImagesFromContent(blog.content);
-      console.log(images);
       deleteImages(images);
 
       // Hapus blog dari database
