@@ -14,7 +14,7 @@ router.get("/", (req, res) => {
 });
 
 router.use("/auth", authRouter);
-router.use("/users", userRouter);
+router.use("/user", userRouter);
 router.use("/blog", blogRouter);
 router.use("/video", videoRouter);
 router.use("/faq", faqRouter);
