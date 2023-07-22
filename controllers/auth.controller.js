@@ -91,7 +91,7 @@ module.exports = {
       }
 
       const token = jwt.sign(
-        { id: user._id, name: user.name, email: user.email, role: user.role },
+        { id: user._id, name: user.name, email: user.email, role: user.role, dateOfBirth: user.dateOfBirth, gender: user.gender, age: user.age, work: user.work, isVerified: user.isVerified },
         configAuth.jwt_secret,
         { expiresIn: "1d" }
       );
