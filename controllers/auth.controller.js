@@ -69,7 +69,7 @@ module.exports = {
     }
   },
 
-  Login2: async (req, res) => {
+  Login: async (req, res) => {
     const { email, password } = req.body;
 
     try {
@@ -102,44 +102,6 @@ module.exports = {
       res.status(500).json({
         error: "An internal server error occurred",
         message: err.message,
-      });
-    }
-  },
-  Login: async (req, res) => {
-    // get body
-    const { email, password } = req.body;
-    try {
-      // findone
-      const userData = await User.findOne({ email }).exec();
-      // if not found
-      if (userData === null) {
-        res.status(404).json({ message: "User tidak ditemukan" });
-        // handle error code ERR_HTTP_HEADERS_SENT
-        return;
-      }
-      // compare password
-      const match = bcrypt.compareSync(password, userData.password); // true
-      if (!match) return res.status(400).json({ message: "Wrong Password" });
-      // create token
-      const token = jwt.sign(
-        {
-          id: userData._id,
-          name: userData.name,
-          email: userData.email,
-          role: userData.role,
-        },
-        ConfigAuth.jwt_secret
-      );
-      // success login
-      if (userData) {
-        res.json({
-          message: "success login",
-          token,
-        });
-      }
-    } catch (error) {
-      res.status(500).json({
-        message: error.message,
       });
     }
   },
@@ -179,24 +141,6 @@ module.exports = {
     } catch (err) {
       console.log(err);
       res.status(500).json({ message: "An internal server error occurred" });
-    }
-  },
-  Logout: async (req, res) => {
-    localStorage.removeItem("token");
-    req.session.destroy((err) => {
-      if (err) return res.status(400).json({ message: "Tidak dapat logout" });
-      res.status(200).json({ message: "Anda telah logout" });
-    });
-  },
-
-  Me: async (req, res) => {
-    const { token } = req.body;
-    try {
-      let { id, name, email, role } = jwt.verify(token, ConfigAuth.jwt_secret);
-      let user = await User.findById({ _id: id });
-      res.status(200).json({ id, name, email, role, photo: user.profile_url });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
     }
   },
 };

@@ -4,7 +4,7 @@ const {
   register,
   Logout,
   Me,
-  Login2,
+  Login,
   verify,
   resendVerification,
 } = require('../controllers/auth.controller');
@@ -12,7 +12,7 @@ const {
 const router = express.Router();
 
 router.post('/register', register);
-router.post('/login', Login2);
+router.post('/login', Login);
 router.get('/verify/:id', verify);
 router.post('/resendverify', resendVerification);
 router.delete('/logout', Logout);

@@ -38,7 +38,7 @@ const userSchema = new Schema({
     },
   },
   dateOfBirth: {
-    type: String,
+    type: Date,
   },
   gender: {
     type: String,
