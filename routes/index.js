@@ -6,7 +6,6 @@ const userRouter = require("./user.router");
 const authRouter = require("./auth.router");
 const blogRouter = require("./blog.router");
 const faqRouter = require("./faq.route");
-const kepribadianRouter = require("./kepribadian.router");
 const konsulRouter = require("./konsul.router");
 
 router.get("/", (req, res) => {
@@ -18,7 +17,6 @@ router.use("/user", userRouter);
 router.use("/blog", blogRouter);
 router.use("/video", videoRouter);
 router.use("/faq", faqRouter);
-router.use("/kepribadian", kepribadianRouter);
 router.use("/konsul", konsulRouter);
 
 module.exports = router;
