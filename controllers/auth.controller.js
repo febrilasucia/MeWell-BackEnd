@@ -3,7 +3,6 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const configAuth = require("../config/ConfigAuth.js");
-const ConfigAuth = require("../config/ConfigAuth.js");
 const {
   sendVerificationEmail,
 } = require("../middleware/sendVerifycationEmail");
@@ -91,7 +90,17 @@ module.exports = {
       }
 
       const token = jwt.sign(
-        { id: user._id, name: user.name, email: user.email, role: user.role, dateOfBirth: user.dateOfBirth, gender: user.gender, age: user.age, work: user.work, isVerified: user.isVerified },
+        {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          dateOfBirth: user.dateOfBirth,
+          gender: user.gender,
+          age: user.age,
+          work: user.work,
+          isVerified: user.isVerified,
+        },
         configAuth.jwt_secret,
         { expiresIn: "1d" }
       );
