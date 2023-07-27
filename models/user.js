@@ -23,8 +23,8 @@ const userSchema = new Schema({
   },
   role: {
     type: String,
-    enum: ["user", "admin"],
-    default: "user",
+    enum: ["admin", "user", "psikolog"],
+    // default: "user",
     required: [true, "Role is required"],
   },
   profileUrl: {
@@ -52,6 +52,26 @@ const userSchema = new Schema({
   isVerified: {
     type: Boolean,
     default: false,
+  },
+
+  isPsikolog: {
+    type: String,
+    enum: ["Menunggu", "Diterima", "Ditolak"],
+  },
+  pendidikan: {
+    type: String,
+  },
+  univ: {
+    type: String,
+  },
+  ktpUrl: {
+    type: String,
+  },
+  ijazahUrl: {
+    type: String,
+  },
+  alasan: {
+    type: String,
   },
 });
 
