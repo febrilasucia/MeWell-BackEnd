@@ -29,7 +29,7 @@ module.exports = {
     }
   },
 
-  addKonsul: (req, res) => {
+  addKonsul: async (req, res) => {
     const {
       nama_pasien,
       nama_ortu,
@@ -60,10 +60,12 @@ module.exports = {
       createdBy: userId,
     });
 
-    konsul.save();
+    const data = await konsul.save();
+    console.log(data);
 
     res.status(200).json({
       message: "Konsultasi baru berhasil ditambahkan!",
+      data: { id: data._id },
     });
   },
 

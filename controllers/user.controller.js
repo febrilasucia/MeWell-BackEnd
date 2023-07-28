@@ -5,8 +5,17 @@ const fs = require("fs");
 
 module.exports = {
   getAllUser: async (req, res) => {
+    let { role = false } = req.query;
+
+    console.log("ini role", role);
     try {
-      const users = await User.find({}, "-__v -password");
+      let users = await User.find({}, "-__v -password");
+      if (role) {
+        users = await User.find({
+          role: { $regex: role, $options: "i" },
+        });
+      }
+
       res.json(users);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -51,7 +60,7 @@ module.exports = {
         { $set: data },
         { runValidators: true }
       );
-      res.status(200).json({updatedUser,message:'data berhasil di update'});
+      res.status(200).json({ updatedUser, message: "data berhasil di update" });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }

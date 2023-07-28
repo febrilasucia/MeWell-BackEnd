@@ -62,6 +62,7 @@ const userSchema = new Schema({
     type: String,
     enum: ["Menunggu", "Diterima", "Ditolak"],
   },
+
   pendidikan: {
     type: String,
   },

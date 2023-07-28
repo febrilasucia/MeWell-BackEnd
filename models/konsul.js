@@ -53,6 +53,10 @@ const konsulSchema = new Schema({
     type: String,
     require: true,
   },
+  psikologId: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
   createdAt: {
     type: Date,
     default: Date.now(),
