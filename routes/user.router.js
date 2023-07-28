@@ -11,7 +11,7 @@ const {
 } = require("../controllers/user.controller");
 const { verifyToken, authorizeRoles } = require("../middleware/authUser");
 
-router.get("/", verifyToken, authorizeRoles(["admin"]), getAllUser);
+router.get("/", verifyToken, authorizeRoles(["admin", "user"]), getAllUser);
 router.get("/:id", verifyToken, authorizeRoles(["admin"]), getUserById);
 // router.post('/', verifyToken, authorizeRoles(['admin']), addUser);
 router.post("/", addUser);

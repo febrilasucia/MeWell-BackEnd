@@ -5,7 +5,7 @@ const fs = require("fs");
 
 module.exports = {
   getAllUser: async (req, res) => {
-    let { role = false } = req.query;
+    let { role = false, isPsikolog = false } = req.query;
 
     console.log("ini role", role);
     try {
@@ -13,6 +13,7 @@ module.exports = {
       if (role) {
         users = await User.find({
           role: { $regex: role, $options: "i" },
+          isPsikolog: isPsikolog
         });
       }
 
