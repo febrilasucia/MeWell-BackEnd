@@ -1,12 +1,22 @@
+require("dotenv").config();
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
+const fs = require("fs");
 const configAuth = require("../config/ConfigAuth.js");
 const {
   sendVerificationEmail,
 } = require("../middleware/sendVerifycationEmail");
 const { decryptID } = require("../helpers/encryptedID");
+
+// Fungsi untuk menghapus file
+function deleteFilesIfExists(files) {
+  files.forEach((file) => {
+    if (file && file.path) {
+      fs.unlinkSync(file.path);
+    }
+  });
+}
 
 module.exports = {
   register: async (req, res) => {
@@ -20,10 +30,50 @@ module.exports = {
       gender,
       age,
       work,
+      role,
+      isPsikolog,
+      pendidikan,
+      univ,
+      alasan,
     } = req.body;
+
+    const profileFile =
+      req.files && req.files.profile ? req.files.profile[0] : null;
+    const ktpFile = req.files && req.files.ktp ? req.files.ktp[0] : null;
+    const ijazahFile =
+      req.files && req.files.ijazah ? req.files.ijazah[0] : null;
+
+    const MAX_PROFILE_FILE_SIZE = 5000000; // Maksimal 5MB (dalam byte)
+    const MAX_KTP_FILE_SIZE = 5000000; // Maksimal 5MB (dalam byte)
+    const MAX_IJAZAH_FILE_SIZE = 10000000; // Maksimal 10MB (dalam byte)
+    // Validasi ukuran berkas KTP
+    if (profileFile && profileFile.size > MAX_PROFILE_FILE_SIZE) {
+      // Delete the uploaded image if there is an error
+      deleteFilesIfExists([ktpFile, ijazahFile, profileFile]);
+      return res
+        .status(400)
+        .json({ message: "KTP file size exceeds the limit (5MB)" });
+    }
+    if (ktpFile && ktpFile.size > MAX_KTP_FILE_SIZE) {
+      // Delete the uploaded image if there is an error
+      deleteFilesIfExists([ktpFile, ijazahFile, profileFile]);
+      return res
+        .status(400)
+        .json({ message: "KTP file size exceeds the limit (5MB)" });
+    }
+    // Validasi ukuran berkas Ijazah
+    if (ijazahFile && ijazahFile.size > MAX_IJAZAH_FILE_SIZE) {
+      // Delete the uploaded image if there is an error
+      deleteFilesIfExists([ktpFile, ijazahFile, profileFile]);
+      return res
+        .status(400)
+        .json({ message: "Ijazah file size exceeds the limit (10MB)" });
+    }
 
     // Check if password and confirm password match
     if (password !== confPassword) {
+      // Delete the uploaded image if there is an error
+      deleteFilesIfExists([ktpFile, ijazahFile, profileFile]);
       return res
         .status(400)
         .json({ message: "Password and Confirm Password do not match" });
@@ -34,24 +84,47 @@ module.exports = {
     const hash = bcrypt.hashSync(password, saltRounds);
     password = hash;
 
-    // Create new user
-    const role = "user";
-    const profileUrl = `${req.protocol}://${req.get(
-      "host"
-    )}/images/default.jpg`;
-    const user = new User({
-      name,
-      email,
-      password,
-      role,
-      profileUrl,
-      dateOfBirth,
-      gender,
-      age,
-      work,
-    });
+    let profileUrl = null; // Initialize profileUrl as null
+
+    if (profileFile) {
+      // If profileFile exists, set profileUrl accordingly
+      profileUrl = `/profiles/${profileFile.filename}`;
+    } else if (role === "user") {
+      // If role is user and profileFile doesn't exist, set default profileUrl for user
+      profileUrl = "profile/default-user.jpg";
+    } else if (role === "psikolog") {
+      // If role is psikolog and profileFile doesn't exist, set default profileUrl for psikolog
+      profileUrl = "profile/default-psikolog.jpg";
+    }
+
+    let ktpUrl = null;
+    if (ktpFile) {
+      ktpUrl = `/ktp/${ktpFile.filename}`;
+    }
+    let ijazahUrl = null;
+    if (ijazahFile) {
+      ijazahUrl = `/ijazah/${ijazahFile.filename}`;
+    }
 
     try {
+      // Create new user
+      const user = new User({
+        name,
+        email,
+        password,
+        dateOfBirth,
+        gender,
+        age,
+        work,
+        profileUrl,
+        role,
+        isPsikolog, // Add the additional fields for psikolog
+        pendidikan,
+        univ,
+        ...(ktpUrl !== null && { ktpUrl }), // Tambahkan ktpUrl jika nilainya bukan null
+        ...(ijazahUrl !== null && { ijazahUrl }), // Tambahkan ijazahUrl jika nilainya bukan null
+        alasan,
+      });
       // Save user to the database
       const insertedUser = await user.save();
       // Assume sendVerificationEmail function is defined and works correctly
@@ -60,6 +133,8 @@ module.exports = {
         .status(201)
         .json({ message: "Registration is successful, please verify email" });
     } catch (error) {
+      // Delete the uploaded image if there is an error
+      deleteFilesIfExists([ktpFile, ijazahFile, profileFile]);
       if (error.code === 11000) {
         res.status(400).json({ message: "Email already registered" });
       } else {

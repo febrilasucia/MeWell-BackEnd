@@ -121,8 +121,6 @@ module.exports = {
 
       // Get the thumbnail image file
       const thumbnailFile = req.file;
-      console.log(thumbnailFile);
-      console.log(description);
 
       // Validasi jumlah kata dalam deskripsi
       const wordCount = description.trim().split(' ').length;

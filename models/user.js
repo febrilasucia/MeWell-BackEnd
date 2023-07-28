@@ -39,15 +39,19 @@ const userSchema = new Schema({
   },
   dateOfBirth: {
     type: Date,
+    required: [true, "Date Of Birth is required"],
   },
   gender: {
     type: String,
+    required: [true, "Gender is required"],
   },
   age: {
     type: Number,
+    required: [true, "Age is required"],
   },
   work: {
     type: String,
+    required: [true, "Work is required"],
   },
   isVerified: {
     type: Boolean,
@@ -66,9 +70,11 @@ const userSchema = new Schema({
   },
   ktpUrl: {
     type: String,
+    sparse: true,
   },
   ijazahUrl: {
     type: String,
+    sparse: true,
   },
   alasan: {
     type: String,
