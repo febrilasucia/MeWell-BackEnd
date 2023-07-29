@@ -7,14 +7,18 @@ module.exports = {
   getAllUser: async (req, res) => {
     let { role = false, isPsikolog = false } = req.query;
 
-    console.log("ini role", role);
     try {
       let users = await User.find({}, "-__v -password");
       if (role) {
         users = await User.find({
           role: { $regex: role, $options: "i" },
-          isPsikolog: isPsikolog
         });
+        if (isPsikolog) {
+          users = await User.find({
+            role: { $regex: role, $options: "i" },
+            isPsikolog: isPsikolog
+          });
+        }
       }
 
       res.json(users);
