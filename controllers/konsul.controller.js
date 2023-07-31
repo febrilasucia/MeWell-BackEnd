@@ -18,7 +18,10 @@ module.exports = {
   getKonsulById: async (req, res) => {
     try {
       const { id } = req.params;
-      const konsul = await Konsul.findById(id);
+      const konsul = await Konsul.findById(id, "-__v").populate(
+        "psikologId",
+        "-__v -password"
+      );
 
       res.status(200).json({
         message: "Sukses mendapatkan data konsul",
@@ -82,10 +85,13 @@ module.exports = {
       via_konsul,
       riwayat,
       keluhan,
+      psikologId,
     } = req.body;
 
     const konsulId = req.params.id;
     const updatedBy = req.user.id;
+
+    console.log(konsulId);
 
     const updatedKonsul = {
       nama_pasien,
@@ -99,9 +105,8 @@ module.exports = {
       via_konsul,
       riwayat,
       keluhan,
+      psikologId,
     };
-
-    console.log(updatedKonsul);
 
     try {
       const konsul = await Konsul.findById(konsulId);
