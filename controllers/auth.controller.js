@@ -175,6 +175,7 @@ module.exports = {
           age: user.age,
           work: user.work,
           isVerified: user.isVerified,
+          isPsikolog: user.isPsikolog,
         },
         configAuth.jwt_secret,
         { expiresIn: "1d" }
