@@ -1,9 +1,18 @@
+const { default: mongoose } = require("mongoose");
 const Konsul = require("../models/konsul");
 
 module.exports = {
   getAllKonsul: async (req, res) => {
     try {
-      let konsul = await Konsul.find({}, "-__v")
+      let query = {}; // Default query to fetch all Konsul data
+      const { userId = false } = req.query;
+
+      if (userId) {
+        // If userId is provided in the query, fetch Konsul data for that specific user
+        query = { createdBy: mongoose.Types.ObjectId(userId) };
+      }
+
+      let konsul = await Konsul.find(query, "-__v")
         .populate("createdBy", "-_id -email -password -role -isVerified -__v")
         .exec();
 
@@ -18,10 +27,7 @@ module.exports = {
   getKonsulById: async (req, res) => {
     try {
       const { id } = req.params;
-      const konsul = await Konsul.findById(id, "-__v").populate(
-        "psikologId",
-        "-__v -password"
-      );
+      const konsul = await Konsul.findById(id, "-__v").populate("psikologId", "-__v -password");
 
       res.status(200).json({
         message: "Sukses mendapatkan data konsul",
@@ -111,9 +117,7 @@ module.exports = {
     try {
       const konsul = await Konsul.findById(konsulId);
       if (!konsul) {
-        return res
-          .status(404)
-          .json({ message: "Data Konsultasi tidak ditemukan." });
+        return res.status(404).json({ message: "Data Konsultasi tidak ditemukan." });
       }
 
       await Konsul.findByIdAndUpdate(konsulId, updatedKonsul);

@@ -20,6 +20,10 @@ const storage = multer.diskStorage({
       const folderPath = "public/ijazah";
       createFolderIfNotExists(folderPath);
       cb(null, folderPath);
+    } else if (file.fieldname === "buktiPembayaran") {
+      const folderPath = "public/buktiPembayaran";
+      createFolderIfNotExists(folderPath);
+      cb(null, folderPath);
     } else {
       cb(new Error("Invalid fieldname"), null);
     }
