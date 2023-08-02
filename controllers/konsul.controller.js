@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const Konsul = require("../models/konsul");
+const Payment = require("../models/payments");
 
 module.exports = {
   getAllKonsul: async (req, res) => {
@@ -35,6 +36,77 @@ module.exports = {
       });
     } catch (error) {
       console.log(error);
+    }
+  },
+  getKonsulByPaymentStatus: async (req, res) => {
+    try {
+      const idPsikolog = req.user.id
+
+      // Gunakan agregasi untuk mencari konsultasi dengan status "Pembayaran Diterima" dan sesuai psikologId
+      const konsultasiDiterima = await Konsul.aggregate([
+        {
+          $match: {
+            psikologId: mongoose.Types.ObjectId(idPsikolog),
+          },
+        },
+        {
+          $lookup: {
+            from: "payments",
+            localField: "_id",
+            foreignField: "idKonsultasi",
+            as: "payment",
+          },
+        },
+        {
+          $unwind: "$payment",
+        },
+        {
+          $match: {
+            "payment.status": "Pembayaran Diterima",
+          },
+        },
+        {
+          $lookup: {
+            from: "users", // Use the appropriate collection name for the "User" model.
+            localField: "psikologId",
+            foreignField: "_id",
+            as: "psikolog",
+          },
+        },
+        {
+          $unwind: "$psikolog",
+        },
+        {
+          $project: {
+            _id: 1,
+            nama_pasien: 1,
+            nama_ortu: 1,
+            tempat_lahir: 1,
+            tgl_lahir: 1,
+            gender: 1,
+            no_wa: 1,
+            alamat: 1,
+            kategori_pasien: 1,
+            via_konsul: 1,
+            riwayat: 1,
+            keluhan: 1,
+            psikolog: {
+              nama: "$psikolog.name", // Include only the "nama" field for the psikolog
+            },
+            createdAt: 1,
+            updatedAt: 1,
+            createdBy: 1,
+          },
+        },
+      ]);
+
+      res.status(200).json({
+        message: "Sukses mendapatkan data konsultasi dengan pembayaran diterima",
+        data: konsultasiDiterima,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Terjadi kesalahan saat mengambil data konsultasi" });
     }
   },
 

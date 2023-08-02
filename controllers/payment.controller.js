@@ -14,11 +14,11 @@ module.exports = {
   getPaymentById: async (req, res) => {
     try {
       const { id } = req.params;
-      const konsul = await Konsul.findById(id, "-__v");
+      const payment = await Payment.findById(id, "-__v");
 
       res.status(200).json({
-        message: "Sukses mendapatkan data konsul",
-        data: konsul,
+        message: "Sukses mendapatkan data payment",
+        data: payment,
       });
     } catch (error) {
       console.log(error);
