@@ -183,7 +183,7 @@ module.exports = {
 
     try {
       const user = await User.findOne({ email });
-      const psikolog = await User.findOne({ user_id: user.user_id });
+      const psikolog = await Psikolog.findOne({ user_id: user.user_id });
       if (!user) {
         return res.status(401).json({ message: "Email is not registered" });
       }
