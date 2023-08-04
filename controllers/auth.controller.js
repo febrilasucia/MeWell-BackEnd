@@ -200,6 +200,7 @@ module.exports = {
         });
       }
 
+
       const token = jwt.sign(
         {
           _id: user._id,
@@ -209,7 +210,6 @@ module.exports = {
           date_birth: user.date_birth,
           email: user.email,
           is_verified: user.is_verified,
-          univ: psikolog.univ,
         },
         configAuth.jwt_secret,
         { expiresIn: "1d" }
