@@ -27,7 +27,7 @@ module.exports = {
   createPayment: async (req, res) => {
     const { idKonsultasi, status } = req.body;
     const buktiFile = req.file;
-    const createdBy = req.user.id;
+    const createdBy = req.user._id;
 
     // Set the bukti image path in the blog data
     let buktiImagePath = "";

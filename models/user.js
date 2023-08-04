@@ -5,29 +5,41 @@ const userSchema = new Schema({
     type: String,
     required: [true, "Name is required"],
   },
-  email: {
-    type: String,
-    trim: true,
-    lowercase: true,
-    unique: true,
-    required: [true, "Email is required"],
-    match: [
-      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-      "Please provide a valid email address",
-    ],
-  },
-  password: {
-    type: String,
-    required: [true, "Password is required"],
-    trim: true,
-  },
   role: {
     type: String,
     enum: ["admin", "user", "psikolog"],
     // default: "user",
     required: [true, "Role is required"],
   },
-  profileUrl: {
+  gender: {
+    type: String,
+    required: [true, "Gender is required"],
+  },
+  place_birth: {
+    type: String,
+  },
+  date_birth: {
+    type: Date,
+    required: [true, "Date Of Birth is required"],
+  },
+  email: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    unique: true,
+    required: [true, "Email is required"],
+    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, "Please provide a valid email address"],
+  },
+  password: {
+    type: String,
+    required: [true, "Password is required"],
+    trim: true,
+  },
+  is_verified: {
+    type: Boolean,
+    default: false,
+  },
+  profile: {
     type: String,
     default: function () {
       const req = this instanceof mongoose.Document ? this.$__.req : undefined;
@@ -37,48 +49,13 @@ const userSchema = new Schema({
       return undefined;
     },
   },
-  dateOfBirth: {
+  created_at: {
     type: Date,
-    required: [true, "Date Of Birth is required"],
+    default: Date.now(),
   },
-  gender: {
-    type: String,
-    required: [true, "Gender is required"],
-  },
-  age: {
-    type: Number,
-    required: [true, "Age is required"],
-  },
-  work: {
-    type: String,
-    required: [true, "Work is required"],
-  },
-  isVerified: {
-    type: Boolean,
-    default: false,
-  },
-
-  isPsikolog: {
-    type: String,
-    enum: ["Menunggu", "Diterima", "Ditolak"],
-  },
-
-  pendidikan: {
-    type: String,
-  },
-  univ: {
-    type: String,
-  },
-  ktpUrl: {
-    type: String,
-    sparse: true,
-  },
-  ijazahUrl: {
-    type: String,
-    sparse: true,
-  },
-  alasan: {
-    type: String,
+  updated_at: {
+    type: Date,
+    default: Date.now(),
   },
 });
 

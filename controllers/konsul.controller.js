@@ -40,7 +40,7 @@ module.exports = {
   },
   getKonsulByPaymentStatus: async (req, res) => {
     try {
-      const idPsikolog = req.user.id
+      const idPsikolog = req.user._id
 
       // Gunakan agregasi untuk mencari konsultasi dengan status "Pembayaran Diterima" dan sesuai psikologId
       const konsultasiDiterima = await Konsul.aggregate([
@@ -124,7 +124,7 @@ module.exports = {
       riwayat,
       keluhan,
     } = req.body;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const konsul = new Konsul({
       nama_pasien,
@@ -167,7 +167,7 @@ module.exports = {
     } = req.body;
 
     const konsulId = req.params.id;
-    const updatedBy = req.user.id;
+    const updatedBy = req.user._id;
 
     console.log(konsulId);
 

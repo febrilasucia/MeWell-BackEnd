@@ -1,8 +1,8 @@
-const Blog = require('../models/blogs');
-const cheerio = require('cheerio');
-const path = require('path');
-const fs = require('fs');
-const upload = require('../middleware/multerConfig');
+const Blog = require("../models/blog");
+const cheerio = require("cheerio");
+const path = require("path");
+const fs = require("fs");
+const upload = require("../middleware/multerConfig");
 
 // Fungsi untuk mendapatkan daftar gambar dari konten blog
 const getImagesFromContent = (content) => {
@@ -10,7 +10,7 @@ const getImagesFromContent = (content) => {
   const images = [];
 
   $('img[src^="/images/"]').each((index, element) => {
-    const imageSrc = $(element).attr('src');
+    const imageSrc = $(element).attr("src");
     images.push(imageSrc);
   });
 
@@ -22,7 +22,7 @@ const getImagesFromUpdatedContent = (content) => {
   const images = [];
 
   $('img[src^="http://localhost:5000/images/"]').each((index, element) => {
-    const imageSrc = $(element).attr('src');
+    const imageSrc = $(element).attr("src");
     images.push(imageSrc);
   });
 
@@ -32,7 +32,7 @@ const getImagesFromUpdatedContent = (content) => {
 // Fungsi untuk menghapus gambar dari server
 const deleteImages = (images) => {
   images.forEach((image) => {
-    const imagePath = path.join(__dirname, '..', 'public', image);
+    const imagePath = path.join(__dirname, "..", "public", image);
     if (fs.existsSync(imagePath)) {
       // Hapus gambar hanya jika file gambar masih ada
       fs.unlinkSync(imagePath);
@@ -43,8 +43,8 @@ const deleteImages = (images) => {
 const checkAndDeleteMissingImages = (originalContent, updatedContent) => {
   const $ = cheerio.load(updatedContent);
   const originalImages = getImagesFromContent(originalContent);
-  const updatedImages = getImagesFromUpdatedContent(updatedContent).map(
-    (image) => image.replace('http://localhost:5000', '')
+  const updatedImages = getImagesFromUpdatedContent(updatedContent).map((image) =>
+    image.replace("http://localhost:5000", "")
   );
 
   const missingImages = [];
@@ -58,7 +58,7 @@ const checkAndDeleteMissingImages = (originalContent, updatedContent) => {
 
   // Delete the missing images
   missingImages.forEach((image) => {
-    const imagePath = path.join(__dirname, '..', 'public', image);
+    const imagePath = path.join(__dirname, "..", "public", image);
     if (fs.existsSync(imagePath)) {
       fs.unlinkSync(imagePath);
     }
@@ -76,10 +76,10 @@ module.exports = {
     let { title = false } = req.query;
     try {
       // execute query with page, limit, and filter values
-      let blog = await Blog.find({}, '-__v')
+      let blog = await Blog.find({}, "-__v")
         .populate(
-          'createdBy',
-          '-__v -password -profileUrl -gender -age -work -hobbies -isVerified -dateOfBirth -role -email'
+          "createdBy",
+          "-__v -password -profile -gender -is_verified -birth_date -date_birth -role -email"
         )
         .exec();
       res.status(200).json(blog);
@@ -94,26 +94,23 @@ module.exports = {
   getBlogById: async (req, res) => {
     const { id } = req.params;
 
-    const blog = await Blog.findById(id).populate(
-      'createdBy',
-      '-__v -email -password -role -_id -profile_url'
-    );
+    const blog = await Blog.findById(id).populate("createdBy", "-__v -email -password -role -_id -profile");
     try {
       res.status(200).json({
-        message: 'success',
+        message: "success",
         data: blog,
       });
     } catch (error) {
       res.status(404).json({
-        message: 'error',
+        message: "error",
       });
     }
   },
 
   createBlog: async (req, res) => {
-    upload.single('thumbnail')(req, res, async function (err) {
+    upload.single("thumbnail")(req, res, async function (err) {
       const { title, description, author, content } = req.body;
-      const createdBy = req.user.id;
+      const createdBy = req.user._id;
       if (err) {
         console.error(err);
         return res.status(400).json({ error: err.message });
@@ -123,43 +120,32 @@ module.exports = {
       const thumbnailFile = req.file;
 
       // Validasi jumlah kata dalam deskripsi
-      const wordCount = description.trim().split(' ').length;
+      const wordCount = description.trim().split(" ").length;
       if (wordCount > 50) {
         // Delete the uploaded thumbnail image if the description exceeds the word limit
         if (thumbnailFile) {
           fs.unlinkSync(thumbnailFile.path);
         }
-        return res
-          .status(400)
-          .json({ message: 'Deskripsi melebihi batas maksimum kata.' });
+        return res.status(400).json({ message: "Deskripsi melebihi batas maksimum kata." });
       }
 
       // Mengubah tag <img> dengan atribut src Base64 menjadi tautan gambar yang valid
       const $ = cheerio.load(content);
-      $('img').each((index, element) => {
-        const base64Data = $(element).attr('src').split(';base64,').pop();
-        const imageExtension = $(element)
-          .attr('src')
-          .split('/')[1]
-          .split(';')[0];
+      $("img").each((index, element) => {
+        const base64Data = $(element).attr("src").split(";base64,").pop();
+        const imageExtension = $(element).attr("src").split("/")[1].split(";")[0];
         const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
-        const imagePath = path.join(
-          __dirname,
-          '..',
-          'public',
-          'images',
-          imageFileName
-        );
+        const imagePath = path.join(__dirname, "..", "public", "images", imageFileName);
 
         // Menyimpan gambar ke server
-        fs.writeFileSync(imagePath, base64Data, { encoding: 'base64' });
+        fs.writeFileSync(imagePath, base64Data, { encoding: "base64" });
 
         // Mengubah atribut src menjadi tautan gambar yang valid
-        $(element).attr('src', `/images/${imageFileName}`);
+        $(element).attr("src", `/images/${imageFileName}`);
       });
 
       // Set the thumbnail image path in the blog data
-      let thumbnailImagePath = '';
+      let thumbnailImagePath = "";
       if (thumbnailFile) {
         thumbnailImagePath = `/thumbnails/${thumbnailFile.filename}`;
       }
@@ -182,7 +168,7 @@ module.exports = {
           fs.unlinkSync(thumbnailFile.path);
         }
         res.status(404).json({
-          message: 'Error',
+          message: "Error",
           error: error.message,
         });
       }
@@ -190,43 +176,35 @@ module.exports = {
   },
 
   updateBlog: async (req, res) => {
-    upload.single('thumbnail')(req, res, async function (err) {
+    upload.single("thumbnail")(req, res, async function (err) {
       const { title, description, author, content } = req.body;
       const blogId = req.params.id;
-      const updatedBy = req.user.id;
+      const updatedBy = req.user._id;
 
       // Validasi jumlah kata dalam deskripsi
-      const wordCount = description.trim().split(' ').length;
+      const wordCount = description.trim().split(" ").length;
       if (wordCount > 50) {
-        return res
-          .status(400)
-          .json({ message: 'Deskripsi melebihi batas maksimum kata.' });
+        return res.status(400).json({ message: "Deskripsi melebihi batas maksimum kata." });
       }
 
       // Mengubah tag <img> dengan atribut src Base64 menjadi tautan gambar yang valid
       const $ = cheerio.load(content);
 
-      $('img').each((index, element) => {
-        const imageSrc = $(element).attr('src');
+      $("img").each((index, element) => {
+        const imageSrc = $(element).attr("src");
 
         // Periksa apakah gambar adalah gambar dengan format base64
-        if (imageSrc.startsWith('data:image')) {
-          const base64Data = imageSrc.split(';base64,').pop();
-          const imageExtension = imageSrc.split('/')[1].split(';')[0];
+        if (imageSrc.startsWith("data:image")) {
+          const base64Data = imageSrc.split(";base64,").pop();
+          const imageExtension = imageSrc.split("/")[1].split(";")[0];
           const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
-          const imagePath = path.join(
-            __dirname,
-            '..',
-            'public',
-            'images',
-            imageFileName
-          );
+          const imagePath = path.join(__dirname, "..", "public", "images", imageFileName);
 
           // Menyimpan gambar ke server
-          fs.writeFileSync(imagePath, base64Data, { encoding: 'base64' });
+          fs.writeFileSync(imagePath, base64Data, { encoding: "base64" });
 
           // Mengubah atribut src menjadi tautan gambar yang valid
-          $(element).attr('src', `/images/${imageFileName}`);
+          $(element).attr("src", `/images/${imageFileName}`);
         }
       });
 
@@ -234,7 +212,7 @@ module.exports = {
       const thumbnailFile = req.file;
 
       // Set the thumbnail image path in the blog data
-      let thumbnailImagePath = '';
+      let thumbnailImagePath = "";
       if (thumbnailFile) {
         thumbnailImagePath = `/thumbnails/${thumbnailFile.filename}`;
       }
@@ -251,17 +229,12 @@ module.exports = {
       try {
         const blog = await Blog.findById(blogId);
         if (!blog) {
-          return res.status(404).json({ message: 'Blog not found.' });
+          return res.status(404).json({ message: "Blog not found." });
         }
 
         // Delete the existing thumbnail image if the new thumbnail is uploaded
         if (thumbnailFile && blog.thumbnail) {
-          const thumbnailPath = path.join(
-            __dirname,
-            '..',
-            'public',
-            blog.thumbnail.replace('/', '')
-          );
+          const thumbnailPath = path.join(__dirname, "..", "public", blog.thumbnail.replace("/", ""));
           fs.unlinkSync(thumbnailPath);
         }
 
@@ -272,15 +245,13 @@ module.exports = {
         // Mengupdate blog dengan data yang baru
         await Blog.findByIdAndUpdate(blogId, updatedBlog);
 
-        res.status(200).json({ message: 'Blog updated successfully.' });
+        res.status(200).json({ message: "Blog updated successfully." });
       } catch (error) {
         console.log(error);
         if (thumbnailFile) {
           fs.unlinkSync(thumbnailFile.path);
         }
-        res
-          .status(500)
-          .json({ message: 'Error updating blog.', error: error.message });
+        res.status(500).json({ message: "Error updating blog.", error: error.message });
       }
     });
   },
@@ -288,7 +259,7 @@ module.exports = {
   deleteBlog: async (req, res) => {
     const { id } = req.params;
     const userId = req.user._id;
-    const isAdmin = req.user.role === 'admin';
+    const isAdmin = req.user.role === "admin";
 
     try {
       let blog;
@@ -300,18 +271,13 @@ module.exports = {
         blog = await Blog.findOne({ _id: id, createdBy: userId });
       }
       if (!blog) {
-        return res.status(404).json({ message: 'Blog tidak ditemukan.' });
+        return res.status(404).json({ message: "Blog tidak ditemukan." });
       }
 
       // Hapus gambar thumbnail yang terkait dengan blog
       const thumbnailImage = blog.thumbnail;
       if (thumbnailImage) {
-        const thumbnailPath = path.join(
-          __dirname,
-          '..',
-          'public',
-          thumbnailImage
-        );
+        const thumbnailPath = path.join(__dirname, "..", "public", thumbnailImage);
         fs.unlinkSync(thumbnailPath);
       }
 
@@ -322,10 +288,10 @@ module.exports = {
       // Hapus blog dari database
       await Blog.deleteOne({ _id: id });
 
-      res.status(200).json({ message: 'Blog berhasil dihapus.' });
+      res.status(200).json({ message: "Blog berhasil dihapus." });
     } catch (error) {
       res.status(500).json({
-        message: 'Terjadi kesalahan saat menghapus blog.',
+        message: "Terjadi kesalahan saat menghapus blog.",
         error: error.message,
       });
     }

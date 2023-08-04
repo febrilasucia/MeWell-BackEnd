@@ -32,8 +32,8 @@ const getImagesFromUpdatedContent = (content) => {
 const checkAndDeleteMissingImages = (originalContent, updatedContent) => {
   const $ = cheerio.load(updatedContent);
   const originalImages = getImagesFromContent(originalContent);
-  const updatedImages = getImagesFromUpdatedContent(updatedContent).map(
-    (image) => image.replace("http://localhost:5000", "")
+  const updatedImages = getImagesFromUpdatedContent(updatedContent).map((image) =>
+    image.replace("http://localhost:5000", "")
   );
 
   const missingImages = [];
@@ -120,7 +120,7 @@ module.exports = {
 
   addVideo: (req, res) => {
     const { title, videoLink, description, author, content } = req.body;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     if (videoLink && !videoLink.startsWith("https://youtu.be/")) {
       res.status(400).json({ message: "Invalid YouTube video link" });
@@ -147,13 +147,11 @@ module.exports = {
   updateVideoById: async (req, res) => {
     const { title, videoLink, description, author, content } = req.body;
     const videoId = req.params.id;
-    const updatedBy = req.user.id;
+    const updatedBy = req.user._id;
 
     const wordCount = description.trim().split(" ").length;
     if (wordCount > 50) {
-      return res
-        .status(400)
-        .json({ message: "Deskripsi melebihi batas maksimum kata." });
+      return res.status(400).json({ message: "Deskripsi melebihi batas maksimum kata." });
     }
 
     const $ = cheerio.load(content);
@@ -166,13 +164,7 @@ module.exports = {
         const base64Data = imageSrc.split(";base64,").pop();
         const imageExtension = imageSrc.split("/")[1].split(";")[0];
         const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
-        const imagePath = path.join(
-          __dirname,
-          "..",
-          "public",
-          "images",
-          imageFileName
-        );
+        const imagePath = path.join(__dirname, "..", "public", "images", imageFileName);
 
         // Menyimpan gambar ke server
         fs.writeFileSync(imagePath, base64Data, { encoding: "base64" });
@@ -206,9 +198,7 @@ module.exports = {
       res.status(200).json({ message: "Video updated successfull" });
     } catch (error) {
       console.log(error);
-      res
-        .status(500)
-        .json({ message: "Error updating video.", error: error.message });
+      res.status(500).json({ message: "Error updating video.", error: error.message });
     }
   },
 
@@ -256,10 +246,7 @@ module.exports = {
   getAllCommentByVideo: async (req, res) => {
     try {
       const { id } = req.params;
-      const video = await Video.findById(
-        id,
-        "-_id -link -judul -deskripsi -tanggalUpload"
-      ).populate(
+      const video = await Video.findById(id, "-_id -link -judul -deskripsi -tanggalUpload").populate(
         "comment.postedBy",
         "-_id -email -password -role -profile_url -__v"
       );
