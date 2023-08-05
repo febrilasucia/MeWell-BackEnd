@@ -22,7 +22,7 @@ module.exports = {
     // Get body data
     let {
       name,
-      role,
+      role = "user",
       gender,
       place_birth, // Tambahkan place_birth sesuai model User
       date_birth, // Ubah menjadi date_birth
@@ -199,7 +199,6 @@ module.exports = {
           message: "Email is not verified, please verify it before logging in",
         });
       }
-
 
       const token = jwt.sign(
         {
