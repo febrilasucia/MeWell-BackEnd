@@ -169,6 +169,9 @@ module.exports = {
       if (status == "Diterima") {
         user.role = "psikolog";
         await user.save();
+      } else if (status == "Ditolak") {
+        user.role = "user";
+        await user.save();
       }
 
       res.json({ message: "berhasil" });
