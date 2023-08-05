@@ -9,7 +9,7 @@ const konsulSchema = new Schema({
   },
   psikolog_id: {
     type: Schema.Types.ObjectId,
-    ref: "Psikolog",
+    ref: "User",
   },
   via_konsul: {
     type: String,
