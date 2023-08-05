@@ -28,7 +28,7 @@ module.exports = {
   getKonsulById: async (req, res) => {
     try {
       const { id } = req.params;
-      const konsul = await Konsul.findById(id, "-__v").populate("psikologId", "-__v -password");
+      const konsul = await Konsul.findById(id, "-__v").populate("psikolog_id", "-__v -password");
 
       res.status(200).json({
         message: "Sukses mendapatkan data konsul",
@@ -103,34 +103,15 @@ module.exports = {
   },
 
   addKonsul: async (req, res) => {
-    const {
-      nama_pasien,
-      nama_ortu,
-      tempat_lahir,
-      tgl_lahir,
-      gender,
-      no_wa,
-      alamat,
-      kategori_pasien,
-      via_konsul,
-      riwayat,
-      keluhan,
-    } = req.body;
-    const userId = req.user._id;
-
+    const { psikolog_id, via_konsul, riwayat, keluhan } = req.body;
+    console.log(req.body);
+    const user_id = req.user._id;
     const konsul = new Konsul({
-      nama_pasien,
-      nama_ortu,
-      tempat_lahir,
-      tgl_lahir,
-      gender,
-      no_wa,
-      alamat,
-      kategori_pasien,
+      psikolog_id,
       via_konsul,
       riwayat,
       keluhan,
-      createdBy: userId,
+      user_id,
     });
 
     const data = await konsul.save();
@@ -143,39 +124,19 @@ module.exports = {
   },
 
   updateKonsulById: async (req, res) => {
-    const {
-      nama_pasien,
-      nama_ortu,
-      tempat_lahir,
-      tgl_lahir,
-      gender,
-      no_wa,
-      alamat,
-      kategori_pasien,
-      via_konsul,
-      riwayat,
-      keluhan,
-      psikologId,
-    } = req.body;
+    const { psikolog_id, via_konsul, riwayat, keluhan } = req.body;
 
     const konsulId = req.params.id;
-    const updatedBy = req.user._id;
+    const user_id = req.user._id;
 
     console.log(konsulId);
 
     const updatedKonsul = {
-      nama_pasien,
-      nama_ortu,
-      tempat_lahir,
-      tgl_lahir,
-      gender,
-      no_wa,
-      alamat,
-      kategori_pasien,
+      psikolog_id,
       via_konsul,
       riwayat,
       keluhan,
-      psikologId,
+      user_id,
     };
 
     try {
