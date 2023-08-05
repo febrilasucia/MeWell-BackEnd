@@ -25,9 +25,8 @@ module.exports = {
     }
   },
   createPayment: async (req, res) => {
-    const { idKonsultasi, status } = req.body;
+    const { konsultasi_id, status } = req.body;
     const buktiFile = req.file;
-    const createdBy = req.user._id;
 
     // Set the bukti image path in the blog data
     let buktiImagePath = "";
@@ -36,10 +35,9 @@ module.exports = {
     }
 
     const newPayment = new Payment({
-      idKonsultasi,
+      konsultasi_id,
       status,
-      buktiPembayaran: buktiImagePath,
-      createdBy,
+      bukti_pembayaran: buktiImagePath,
     });
 
     try {
@@ -93,8 +91,8 @@ module.exports = {
       }
 
       // Delete the buktiPembayaran image file if it exists
-      if (payment.buktiPembayaran) {
-        fs.unlinkSync(`path/to/your/uploaded/images/${payment.buktiPembayaran}`);
+      if (payment.bukti_pembayaran) {
+        fs.unlinkSync(`path/to/your/uploaded/images/${payment.bukti_pembayaran}`);
       }
 
       // Delete the payment from the database

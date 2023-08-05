@@ -10,11 +10,11 @@ module.exports = {
 
       if (userId) {
         // If userId is provided in the query, fetch Konsul data for that specific user
-        query = { createdBy: mongoose.Types.ObjectId(userId) };
+        query = { user_id: mongoose.Types.ObjectId(userId) };
       }
 
       let konsul = await Konsul.find(query, "-__v")
-        .populate("createdBy", "-_id -email -password -role -isVerified -__v")
+        .populate("user_id", "-_id -email -password -role -isVerified -__v")
         .exec();
 
       res.json({
@@ -40,7 +40,7 @@ module.exports = {
   },
   getKonsulByPaymentStatus: async (req, res) => {
     try {
-      const idPsikolog = req.user._id
+      const idPsikolog = req.user._id;
 
       // Gunakan agregasi untuk mencari konsultasi dengan status "Pembayaran Diterima" dan sesuai psikologId
       const konsultasiDiterima = await Konsul.aggregate([
@@ -79,14 +79,6 @@ module.exports = {
         {
           $project: {
             _id: 1,
-            nama_pasien: 1,
-            nama_ortu: 1,
-            tempat_lahir: 1,
-            tgl_lahir: 1,
-            gender: 1,
-            no_wa: 1,
-            alamat: 1,
-            kategori_pasien: 1,
             via_konsul: 1,
             riwayat: 1,
             keluhan: 1,
@@ -95,7 +87,7 @@ module.exports = {
             },
             createdAt: 1,
             updatedAt: 1,
-            createdBy: 1,
+            user_id: 1,
           },
         },
       ]);

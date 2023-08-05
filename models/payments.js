@@ -1,9 +1,8 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-
 const paymentSchema = new Schema({
-  idKonsultasi: {
+  konsultasi_id: {
     type: Schema.Types.ObjectId,
     ref: "Konsul",
     require: true,
@@ -13,7 +12,7 @@ const paymentSchema = new Schema({
     enum: ["Pembayaran Sukses", "Pembayaran Diterima", "Pembayaran Ditolak"],
     require: true,
   },
-  buktiPembayaran: {
+  bukti_pembayaran: {
     type: String,
     require: true,
   },
@@ -24,11 +23,6 @@ const paymentSchema = new Schema({
   updatedAt: {
     type: Date,
     default: Date.now(),
-  },
-  createdBy: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    require: true,
   },
 });
 
