@@ -101,6 +101,68 @@ module.exports = {
       res.status(500).json({ message: "Terjadi kesalahan saat mengambil data konsultasi" });
     }
   },
+  getKonslByUserId: async (req, res) => {
+    try {
+      const userId = req.user._id; // Ambil ID pengguna dari pengguna yang sedang login
+
+      // Gunakan agregasi untuk mencari konsultasi dengan sesuai user_id
+      const konsultasiByUserId = await Konsul.aggregate([
+        {
+          $match: {
+            user_id: mongoose.Types.ObjectId(userId),
+          },
+        },
+        {
+          $lookup: {
+            from: "users", // Use the appropriate collection name for the "User" model.
+            localField: "psikolog_id",
+            foreignField: "_id",
+            as: "psikolog",
+          },
+        },
+        {
+          $unwind: "$psikolog",
+        },
+        {
+          $lookup: {
+            from: "payments", // Use the appropriate collection name for the "Payment" model.
+            localField: "_id",
+            foreignField: "konsultasi_id",
+            as: "payment",
+          },
+        },
+        {
+          $unwind: {
+            path: "$payment",
+            preserveNullAndEmptyArrays: true, // Menjaga agar data konsultasi tetap ditampilkan meskipun tidak ada data payment
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            via_konsul: 1,
+            riwayat: 1,
+            keluhan: 1,
+            psikolog: {
+              nama: "$psikolog.name", // Include only the "nama" field for the psikolog
+            },
+            createdAt: 1,
+            updatedAt: 1,
+            user_id: 1,
+            payment: 1, // Include the payment data
+          },
+        },
+      ]);
+
+      res.status(200).json({
+        message: "Sukses mendapatkan data konsultasi berdasarkan user ID",
+        data: konsultasiByUserId,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Terjadi kesalahan saat mengambil data konsultasi" });
+    }
+  },
 
   addKonsul: async (req, res) => {
     const { via_konsul, riwayat, keluhan, psikolog_id } = req.body;

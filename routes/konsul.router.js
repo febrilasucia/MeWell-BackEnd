@@ -8,11 +8,13 @@ const {
   updateKonsulById,
   deleteKonsulById,
   getKonsulByPaymentStatus,
+  getKonslByUserId,
 } = require("../controllers/konsul.controller");
 const { verifyToken, authorizeRoles } = require("../middleware/authUser");
 
 router.get("/", getAllKonsul);
 router.get("/pembayaran-diterima", verifyToken, authorizeRoles(["admin", "psikolog"]), getKonsulByPaymentStatus);
+router.get("/user", verifyToken, authorizeRoles(["admin", "user"]), getKonslByUserId);
 router.get("/:id", getKonsulById);
 router.post("/", verifyToken, authorizeRoles(["admin", "user"]), addKonsul);
 router.patch("/:id", verifyToken, authorizeRoles(["admin", "user"]), updateKonsulById);
