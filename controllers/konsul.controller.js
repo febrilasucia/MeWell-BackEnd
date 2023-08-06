@@ -40,20 +40,20 @@ module.exports = {
   },
   getKonsulByPaymentStatus: async (req, res) => {
     try {
-      const idPsikolog = req.user._id;
+      const id_psikolog = req.user._id;
 
       // Gunakan agregasi untuk mencari konsultasi dengan status "Pembayaran Diterima" dan sesuai psikologId
       const konsultasiDiterima = await Konsul.aggregate([
         {
           $match: {
-            psikolog_id: mongoose.Types.ObjectId(idPsikolog),
+            psikolog_id: mongoose.Types.ObjectId(id_psikolog),
           },
         },
         {
           $lookup: {
             from: "payments",
             localField: "_id",
-            foreignField: "idKonsultasi",
+            foreignField: "konsultasi_id",
             as: "payment",
           },
         },
@@ -88,6 +88,7 @@ module.exports = {
             createdAt: 1,
             updatedAt: 1,
             user_id: 1,
+            payment: "$payment",
           },
         },
       ]);
