@@ -75,12 +75,12 @@ module.exports = {
         name,
         role,
         gender,
-        place_birth, // Tambahkan place_birth sesuai model User
-        date_birth, // Ubah dari dateOfBirth menjadi date_of_birth
+        place_birth,
+        date_birth,
         email,
         password,
         is_verified,
-        profile: profileUrl, // Ubah dari profileUrl menjadi profile_url
+        profile: profileUrl,
       });
 
       insertedUser = await user.save();
@@ -135,11 +135,11 @@ module.exports = {
     }
 
     const psikolog = new Psikolog({
-      user_id, // Set user_id referensi ke user yang baru dibuat
-      status, // Atau status sesuai default yang diinginkan
-      ijazah: ijazahUrl, // Ubah dari ijazahFile menjadi ijazahUrl
-      ktp: ktpUrl, // Ubah dari ktpFile menjadi ktpUrl
-      univ, // Tambahkan univ sesuai model Psikolog
+      user_id,
+      status,
+      ijazah: ijazahUrl,
+      ktp: ktpUrl,
+      univ,
     });
 
     try {
@@ -186,7 +186,8 @@ module.exports = {
 
     try {
       const user = await User.findOne({ email });
-      const psikolog = await Psikolog.findOne({ user_id: user.user_id });
+      // const psikolog = await Psikolog.findOne({ user_id: user.user_id });
+      const psikolog = await Psikolog.findOne({ user_id: user._id });
       if (!user) {
         return res.status(401).json({ message: "Email is not registered" });
       }
@@ -212,6 +213,7 @@ module.exports = {
           date_birth: user.date_birth,
           email: user.email,
           is_verified: user.is_verified,
+          psikologStatus: psikolog ? psikolog.status : null,
         },
         configAuth.jwt_secret,
         { expiresIn: "1d" }
