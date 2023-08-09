@@ -28,11 +28,12 @@ module.exports = {
   getKonsulById: async (req, res) => {
     try {
       const { id } = req.params;
-      const konsul = await Konsul.findById(id, "-__v").populate("psikolog_id", "-__v -password").populate(
-        "user_id",
-        "-_id -email -password -role -is_verified -__v -date_birth -place_birth -is_verified -created_at -updated_at -gender"
-      );
-
+      const konsul = await Konsul.findById(id, "-__v")
+        .populate("psikolog_id", "-__v -password")
+        .populate(
+          "user_id",
+          "-_id -email -password -role -is_verified -__v -date_birth -place_birth -is_verified -created_at -updated_at -gender"
+        );
       console.log(konsul);
       res.status(200).json({
         message: "Sukses mendapatkan data konsul",
@@ -42,6 +43,7 @@ module.exports = {
       console.log(error);
     }
   },
+
   getKonsulByPaymentStatus: async (req, res) => {
     try {
       const id_psikolog = req.user._id;
