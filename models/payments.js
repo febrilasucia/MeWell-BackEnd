@@ -9,7 +9,7 @@ const paymentSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["Pembayaran Sukses", "Pembayaran Diterima", "Pembayaran Ditolak"],
+    enum: ["Pembayaran Diterima", "Pembayaran Sukses", "Pembayaran Ditolak"],
     require: true,
   },
   bukti_pembayaran: {

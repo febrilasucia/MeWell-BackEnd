@@ -11,11 +11,6 @@ const konsulSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "User",
   },
-  via_konsul: {
-    type: String,
-    require: true,
-    enum: ["Via Online", "Via Offline"],
-  },
   riwayat: {
     type: String,
     require: true,

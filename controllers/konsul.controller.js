@@ -28,7 +28,11 @@ module.exports = {
   getKonsulById: async (req, res) => {
     try {
       const { id } = req.params;
-      const konsul = await Konsul.findById(id, "-__v").populate("psikolog_id", "-__v -password");
+      const konsul = await Konsul.findById(id, "-__v").populate("psikolog_id", "-__v -password").populate(
+        "user_id",
+        "-_id -email -password -role -is_verified -__v -date_birth -place_birth -is_verified -created_at -updated_at -gender"
+      );
+
       console.log(konsul);
       res.status(200).json({
         message: "Sukses mendapatkan data konsul",
@@ -41,6 +45,7 @@ module.exports = {
   getKonsulByPaymentStatus: async (req, res) => {
     try {
       const id_psikolog = req.user._id;
+
 
       // Gunakan agregasi untuk mencari konsultasi dengan status "Pembayaran Diterima" dan sesuai psikologId
       const konsultasiDiterima = await Konsul.aggregate([
@@ -62,7 +67,7 @@ module.exports = {
         },
         {
           $match: {
-            "payment.status": "Pembayaran Diterima",
+            "payment.status": "Pembayaran Sukses",
           },
         },
         {
@@ -79,7 +84,6 @@ module.exports = {
         {
           $project: {
             _id: 1,
-            via_konsul: 1,
             riwayat: 1,
             keluhan: 1,
             psikolog: {
@@ -94,7 +98,7 @@ module.exports = {
       ]);
 
       res.status(200).json({
-        message: "Sukses mendapatkan data konsultasi dengan pembayaran diterima",
+        message: "Sukses mendapatkan data konsultasi dengan pembayaran Sukses",
         data: konsultasiDiterima,
       });
     } catch (error) {
@@ -141,7 +145,6 @@ module.exports = {
         {
           $project: {
             _id: 1,
-            via_konsul: 1,
             riwayat: 1,
             keluhan: 1,
             psikolog: {
@@ -166,12 +169,11 @@ module.exports = {
   },
 
   addKonsul: async (req, res) => {
-    const { via_konsul, riwayat, keluhan, psikolog_id } = req.body;
+    const { riwayat, keluhan, psikolog_id } = req.body;
     const userId = req.user._id;
 
     const konsul = new Konsul({
       psikolog_id,
-      via_konsul,
       riwayat,
       keluhan,
       user_id: userId,
@@ -187,7 +189,7 @@ module.exports = {
   },
 
   updateKonsulById: async (req, res) => {
-    const { via_konsul, riwayat, keluhan, psikolog_id } = req.body;
+    const { riwayat, keluhan, psikolog_id } = req.body;
 
     const konsulId = req.params.id;
     const userId = req.user._id;
@@ -195,7 +197,6 @@ module.exports = {
     console.log(konsulId);
 
     const updatedKonsul = {
-      via_konsul,
       riwayat,
       keluhan,
       psikolog_id,
