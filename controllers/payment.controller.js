@@ -4,9 +4,42 @@ const fs = require("fs");
 module.exports = {
   getAllPayment: async (req, res) => {
     try {
-      let payment = await Payment.find({}, "-__v");
+      const payments = await Payment.aggregate([
+        {
+          $lookup: {
+            from: "konsuls", // Ganti dengan nama koleksi konsultasi jika berbeda
+            localField: "konsultasi_id",
+            foreignField: "_id",
+            as: "konsultasi",
+          },
+        },
+        {
+          $unwind: "$konsultasi",
+        },
+        {
+          $lookup: {
+            from: "users", // Ganti dengan nama koleksi pengguna jika berbeda
+            localField: "konsultasi.user_id",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        {
+          $unwind: "$user",
+        },
+        {
+          $project: {
+            _id: 1,
+            status: 1,
+            bukti_pembayaran: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            user_id: "$user.name",
+          },
+        },
+      ]);
 
-      res.status(200).json(payment);
+      res.status(200).json(payments);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

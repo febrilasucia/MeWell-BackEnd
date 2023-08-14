@@ -15,6 +15,7 @@ module.exports = {
 
       let konsul = await Konsul.find(query, "-__v")
         .populate("user_id", "-_id -email -password -role -isVerified -__v")
+        .populate("psikolog_id")
         .exec();
 
       res.json({
@@ -47,7 +48,6 @@ module.exports = {
   getKonsulByPaymentStatus: async (req, res) => {
     try {
       const id_psikolog = req.user._id;
-
 
       // Gunakan agregasi untuk mencari konsultasi dengan status "Pembayaran Diterima" dan sesuai psikologId
       const konsultasiDiterima = await Konsul.aggregate([
@@ -84,6 +84,17 @@ module.exports = {
           $unwind: "$psikolog",
         },
         {
+          $lookup: {
+            from: "users",
+            localField: "user_id",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        {
+          $unwind: "$user",
+        },
+        {
           $project: {
             _id: 1,
             riwayat: 1,
@@ -94,6 +105,7 @@ module.exports = {
             createdAt: 1,
             updatedAt: 1,
             user_id: 1,
+            user_name: "$user.name",
             payment: "$payment",
           },
         },
