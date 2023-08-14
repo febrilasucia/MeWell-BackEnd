@@ -102,10 +102,7 @@ module.exports = {
   registerPsikolog: async (req, res) => {
     const user_id = req.user._id;
     // Get body data
-    let {
-      status = "Menunggu",
-      univ, // Tambahkan univ sesuai model Psikolog
-    } = req.body;
+    let { status = "Menunggu", univ } = req.body;
 
     const ktpFile = req.files && req.files.ktp ? req.files.ktp[0] : null;
     const ijazahFile = req.files && req.files.ijazah ? req.files.ijazah[0] : null;
