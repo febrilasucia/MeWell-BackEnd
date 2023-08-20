@@ -62,38 +62,33 @@ const getNextImageCounter = () => {
 
 module.exports = {
   getAllVideo: async (req, res) => {
-    let { judul = false, page = 1, limit } = req.query;
+    let { title = false, page = 1, limit } = req.query;
 
     try {
-      let count = await Video.countDocuments();
-      if (judul) {
-        count = await Video.countDocuments({
-          judul: { $regex: ".*" + judul + ".*", $options: "i" },
-        });
+      let query = {};
+      if (title) {
+        query.title = { $regex: ".*" + title + ".*", $options: "i" };
       }
+
+      let count = await Video.countDocuments(query);
+
       // if limit not set
       if (!limit) {
         limit = count;
       }
+
       // if page gt page count
       const pageCount = Math.ceil(count / limit);
       if (page > pageCount) {
         page = pageCount;
       }
 
-      let video = await Video.find({}, "-__v")
+      let video = await Video.find(query, "-__v")
         .populate("createdBy", "-_id -email -password -role -isVerified -__v")
         .limit(limit * 1)
         .skip((page - 1) * limit)
         .exec();
-      if (judul) {
-        video = await Video.find({
-          judul: { $regex: ".*" + judul + ".*", $options: "i" },
-        })
-          .limit(limit * 1)
-          .skip((page - 1) * limit)
-          .exec();
-      }
+
       res.json({
         video,
         totalPages: Math.ceil(count / limit),

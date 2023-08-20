@@ -75,13 +75,16 @@ module.exports = {
   getAllBlog: async (req, res) => {
     let { title = false } = req.query;
     try {
+      let query = {};
+      if (title) {
+        query.title = { $regex: title, $options: "i" };
+      }
+
       // execute query with page, limit, and filter values
-      let blog = await Blog.find({}, "-__v")
-        .populate(
-          "createdBy",
-          "-__v -password -profile -gender -is_verified -birth_date -date_birth -role -email"
-        )
+      let blog = await Blog.find(query, "-__v")
+        .populate("createdBy", "-__v -password -profile -gender -is_verified -birth_date -date_birth -role -email")
         .exec();
+
       res.status(200).json(blog);
     } catch (error) {
       console.log(error);
