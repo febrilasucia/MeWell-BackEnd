@@ -140,6 +140,12 @@ module.exports = {
         const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
         const imagePath = path.join(__dirname, "..", "public", "images", imageFileName);
 
+        // Create the "images" folder if it doesn't exist
+        const imagesFolderPath = path.join(__dirname, "..", "public", "images");
+        if (!fs.existsSync(imagesFolderPath)) {
+          fs.mkdirSync(imagesFolderPath);
+        }
+
         // Menyimpan gambar ke server
         fs.writeFileSync(imagePath, base64Data, { encoding: "base64" });
 
@@ -239,16 +245,22 @@ module.exports = {
           return res.status(404).json({ message: "Blog not found." });
         }
 
-        // Delete the existing thumbnail image if the new thumbnail is uploaded
+        // Delete the existing thumbnail image if the new thumbnail is uploaded and the old thumbnail exists
         if (thumbnailFile && blog.thumbnail) {
           const thumbnailPath = path.join(__dirname, "..", "public", blog.thumbnail.replace("/", ""));
-          fs.unlinkSync(thumbnailPath);
+
+          // Check if the thumbnail file exists before trying to delete it
+          if (fs.existsSync(thumbnailPath)) {
+            fs.unlinkSync(thumbnailPath);
+          } else {
+            console.log("Thumbnail file does not exist. Skipping deletion.");
+          }
         }
 
         // Check and delete missing images
         const originalContent = blog.content;
         if (content) {
-          checkAndDeleteMissingImages(originalContent, $.html());
+          checkAndDeleteMissingImages(originalContent, updatedBlog.content);
         }
 
         // Mengupdate blog dengan data yang baru
