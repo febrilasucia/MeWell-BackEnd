@@ -101,4 +101,46 @@ module.exports = {
       res.status(500).json({ message: "Internal server error" });
     }
   },
+  getPsikologStatusByUserId: async (req, res) => {
+    const userId = req.user._id;
+    console.log("userid", userId);
+
+    try {
+      const psikolog = await Psikolog.aggregate([
+        {
+          $match: { _id: mongoose.Types.ObjectId(userId) },
+        },
+        {
+          $project: {
+            status: 1,
+          },
+        },
+      ]);
+      res.json(psikolog);
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  getPsikologStatusByUserId: async (req, res) => {
+    const userId = req.user._id;
+
+    try {
+      const psikolog = await Psikolog.aggregate([
+        {
+          $match: { user_id: mongoose.Types.ObjectId(userId) }, // Menggunakan user_id yang sesuai dengan definisi schema
+        },
+        {
+          $project: {
+            _id: 0, // Tidak perlu menampilkan _id
+            status: 1,
+          },
+        },
+      ]);
+
+      res.json(psikolog[0]);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
 };
