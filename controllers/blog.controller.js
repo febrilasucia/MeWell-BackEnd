@@ -184,32 +184,44 @@ module.exports = {
       const blogId = req.params.id;
       const updatedBy = req.user._id;
 
-      // Validasi jumlah kata dalam deskripsi
-      const wordCount = description.trim().split(" ").length;
-      if (wordCount > 50) {
-        return res.status(400).json({ message: "Deskripsi melebihi batas maksimum kata." });
+      let updatedBlog = {
+        title,
+        description,
+        author,
+        updatedBy,
+      };
+
+      if (description) {
+        // Validasi jumlah kata dalam deskripsi
+        const wordCount = description.trim().split(" ").length;
+        if (wordCount > 50) {
+          return res.status(400).json({ message: "Deskripsi melebihi batas maksimum kata." });
+        }
       }
 
-      // Mengubah tag <img> dengan atribut src Base64 menjadi tautan gambar yang valid
-      const $ = cheerio.load(content);
+      if (content) {
+        // Mengubah tag <img> dengan atribut src Base64 menjadi tautan gambar yang valid
+        const $ = cheerio.load(content);
 
-      $("img").each((index, element) => {
-        const imageSrc = $(element).attr("src");
+        $("img").each((index, element) => {
+          const imageSrc = $(element).attr("src");
 
-        // Periksa apakah gambar adalah gambar dengan format base64
-        if (imageSrc.startsWith("data:image")) {
-          const base64Data = imageSrc.split(";base64,").pop();
-          const imageExtension = imageSrc.split("/")[1].split(";")[0];
-          const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
-          const imagePath = path.join(__dirname, "..", "public", "images", imageFileName);
+          // Periksa apakah gambar adalah gambar dengan format base64
+          if (imageSrc.startsWith("data:image")) {
+            const base64Data = imageSrc.split(";base64,").pop();
+            const imageExtension = imageSrc.split("/")[1].split(";")[0];
+            const imageFileName = `image_${Date.now()}_${getNextImageCounter()}.${imageExtension}`;
+            const imagePath = path.join(__dirname, "..", "public", "images", imageFileName);
 
-          // Menyimpan gambar ke server
-          fs.writeFileSync(imagePath, base64Data, { encoding: "base64" });
+            // Menyimpan gambar ke server
+            fs.writeFileSync(imagePath, base64Data, { encoding: "base64" });
 
-          // Mengubah atribut src menjadi tautan gambar yang valid
-          $(element).attr("src", `/images/${imageFileName}`);
-        }
-      });
+            // Mengubah atribut src menjadi tautan gambar yang valid
+            $(element).attr("src", `/images/${imageFileName}`);
+          }
+        });
+        updatedBlog.content = $.html();
+      }
 
       // Get the thumbnail image file
       const thumbnailFile = req.file;
@@ -218,16 +230,8 @@ module.exports = {
       let thumbnailImagePath = "";
       if (thumbnailFile) {
         thumbnailImagePath = `/thumbnails/${thumbnailFile.filename}`;
+        updatedBlog.thumbnail = thumbnailImagePath;
       }
-
-      const updatedBlog = {
-        title,
-        description,
-        author,
-        content: $.html(),
-        thumbnail: thumbnailImagePath,
-        updatedBy,
-      };
 
       try {
         const blog = await Blog.findById(blogId);
@@ -243,7 +247,9 @@ module.exports = {
 
         // Check and delete missing images
         const originalContent = blog.content;
-        checkAndDeleteMissingImages(originalContent, $.html());
+        if (content) {
+          checkAndDeleteMissingImages(originalContent, $.html());
+        }
 
         // Mengupdate blog dengan data yang baru
         await Blog.findByIdAndUpdate(blogId, updatedBlog);
