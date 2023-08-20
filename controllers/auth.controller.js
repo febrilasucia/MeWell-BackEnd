@@ -38,14 +38,14 @@ module.exports = {
     // Validasi ukuran berkas KTP
     if (profileFile && profileFile.size > MAX_PROFILE_FILE_SIZE) {
       // Delete the uploaded image if there is an error
-      deleteFilesIfExists([ktpFile, ijazahFile, profileFile]);
+      deleteFilesIfExists([profileFile]);
       return res.status(400).json({ message: "KTP file size exceeds the limit (5MB)" });
     }
 
     // Check if password and confirm password match
     if (password !== confPassword) {
       // Delete the uploaded image if there is an error
-      deleteFilesIfExists([ktpFile, ijazahFile, profileFile]);
+      deleteFilesIfExists([profileFile]);
       return res.status(400).json({ message: "Password and Confirm Password do not match" });
     }
 
@@ -91,7 +91,7 @@ module.exports = {
     } catch (error) {
       console.log(error);
       // Delete the uploaded image if there is an error
-      deleteFilesIfExists([ktpFile, ijazahFile, profileFile]);
+      deleteFilesIfExists([profileFile]);
       if (error.code === 11000) {
         res.status(400).json({ message: "Email already registered" });
       } else {
@@ -99,6 +99,7 @@ module.exports = {
       }
     }
   },
+
   registerPsikolog: async (req, res) => {
     const user_id = req.user._id;
     // Get body data
