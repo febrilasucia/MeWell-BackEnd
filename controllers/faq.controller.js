@@ -6,9 +6,7 @@ module.exports = {
       // execute query with page, limit, and filter values
       let faqs = await Faq.find().exec();
       // return response with posts, total pages, and current page
-      res.json({
-        faqs,
-      });
+      res.json(faq);
     } catch (err) {
       console.error(err.message);
     }
