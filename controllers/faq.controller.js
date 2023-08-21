@@ -58,11 +58,7 @@ module.exports = {
   updateFaq: async (req, res) => {
     let data = req.body;
     try {
-      const updatedFaq = await Faq.updateOne(
-        { _id: req.params.id },
-        { $set: data },
-        { runValidators: true }
-      );
+      const updatedFaq = await Faq.updateOne({ _id: req.params.id }, { $set: data }, { runValidators: true });
       res.status(200).json(updatedFaq);
     } catch (error) {
       res.status(400).json({ message: error.message });

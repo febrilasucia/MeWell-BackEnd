@@ -124,8 +124,8 @@ module.exports = {
       }
 
       // Delete the buktiPembayaran image file if it exists
-      if (payment.bukti_pembayaran) {
-        fs.unlinkSync(`path/to/your/uploaded/images/${payment.bukti_pembayaran}`);
+      if (payment.bukti_pembayaran && fs.existsSync(`${payment.bukti_pembayaran}`)) {
+        fs.unlinkSync(`${payment.bukti_pembayaran}`);
       }
 
       // Delete the payment from the database
