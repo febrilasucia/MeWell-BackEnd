@@ -16,7 +16,7 @@ module.exports = {
         if (isPsikolog) {
           users = await User.find({
             role: { $regex: role, $options: "i" },
-            isPsikolog: isPsikolog
+            isPsikolog: isPsikolog,
           });
         }
       }
@@ -40,9 +40,7 @@ module.exports = {
     const saltRounds = 10;
     const hash = bcrypt.hashSync(data.password, saltRounds);
     data.password = hash;
-    const profile_url = `${req.protocol}://${req.get(
-      "host"
-    )}/images/default.jpg`;
+    const profile_url = `${req.protocol}://${req.get("host")}/images/default.jpg`;
     data.profile_url = profile_url;
     const user = new User(data);
     try {
@@ -60,28 +58,29 @@ module.exports = {
       data.password = hash;
     }
     try {
-      const updatedUser = await User.updateOne(
-        { _id: req.params.id },
-        { $set: data },
-        { runValidators: true }
-      );
+      const updatedUser = await User.updateOne({ _id: req.params.id }, { $set: data }, { runValidators: true });
       res.status(200).json({ updatedUser, message: "data berhasil di update" });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
   },
   deleteUser: async (req, res) => {
-    // find user
-    const user = await User.findById({ _id: req.params.id });
     try {
-      // split name img latest
-      img = user.profile_url.split("/").pop();
-      // delete if != default.jpg
-      const filepath = `./public/images/${img}`;
-      if (img != "default.jpg") {
-        fs.unlinkSync(filepath);
+      // find user
+      const user = await User.findById({ _id: req.params.id });
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      } // Check if profile_url exists and is not "default.jpg"
+      if (user.profile_url) {
+        const img = user.profile_url.split("/").pop();
+        if (img !== "default.jpg") {
+          const filepath = `./public/images/${img}`;
+          fs.unlinkSync(filepath);
+        }
       }
-      // delete user in db
+
+      // Delete user in db
       const deletedUser = await User.deleteOne({ _id: req.params.id });
       res.status(200).json({
         message: "User Deleted Successfully",
@@ -93,8 +92,7 @@ module.exports = {
   },
 
   updateProfilePicture: async (req, res) => {
-    if (req.files === null)
-      return res.status(400).json({ message: "No File Uploaded" });
+    if (req.files === null) return res.status(400).json({ message: "No File Uploaded" });
     const file = req.files.file;
     const fileSize = file.data.length;
     const ext = path.extname(file.name);
@@ -102,18 +100,13 @@ module.exports = {
     const url = `${req.protocol}://${req.get("host")}/images/${fileName}`;
     const allowType = [".png", ".jpg", ".jpeg"];
 
-    if (!allowType.includes(ext.toLowerCase()))
-      return res.status(422).json({ message: "Invalid Images" });
-    if (fileSize > 5000000)
-      return res.status(422).json({ message: "Image must be less than 5MB" });
+    if (!allowType.includes(ext.toLowerCase())) return res.status(422).json({ message: "Invalid Images" });
+    if (fileSize > 5000000) return res.status(422).json({ message: "Image must be less than 5MB" });
 
     file.mv(`./public/images/${fileName}`, async (error) => {
       if (error) res.status(500).json({ message: error.message });
       try {
-        await User.updateOne(
-          { _id: req.session.userId },
-          { $set: { profile_url: url } }
-        );
+        await User.updateOne({ _id: req.session.userId }, { $set: { profile_url: url } });
         res.status(201).json({ message: "Image Profile Updated" });
       } catch (error) {
         res.status(400).json({ message: error.message });
