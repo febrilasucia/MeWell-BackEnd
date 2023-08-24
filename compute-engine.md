@@ -71,6 +71,9 @@ https://www.dicoding.com/academies/342/tutorials/20917 disini
 setelah aplikasi berjalan di port 5000 ubah configurasi nginx 80 untuk http 443 untuk https
 
 install nginx
+- sudo apt update
+- sudo apt install nginx
+
 
 Untuk mengonfigurasi Nginx agar mengakses port 5000 secara lokal sebagai default, Anda perlu melakukan beberapa langkah berikut:
 
@@ -78,6 +81,8 @@ Untuk mengonfigurasi Nginx agar mengakses port 5000 secara lokal sebagai default
 
 ```
 sudo nano /etc/nginx/sites-available/default
+sudo nano /etc/nginx/sites-available/domain.com
+sudo nano /etc/nginx/sites-available/backend-mewell.biz.id
 ```
 
 2. Dalam file konfigurasi Nginx, temukan blok server dan hapus atau komentari semua baris di dalamnya.
@@ -99,15 +104,65 @@ server {
     }
 }
 ```
+
 Konfigurasi ini akan membuat Nginx mendengarkan pada port 80 dan meneruskan lalu lintas ke http://localhost:5000.
 
 4. Simpan perubahan yang dilakukan pada file konfigurasi Nginx.
 
 5. Restart Nginx agar perubahan konfigurasi diterapkan:
+
 ```
 sudo systemctl restart nginx
 ```
 
 # configurasi ssl certificate dari certbot
 
+sudo add-apt-repository ppa:certbot/certbot
+
 https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-20-04
+
+---
+- sudo ln -s /etc/nginx/sites-available/domain.com /etc/nginx/sites-enabled/
+
+saya tidak sengaja menambahkan domain.com bukan http://34.101.165.0:5000 bagaimana menghapusnya
+
+> sudo rm /etc/nginx/sites-enabled/domain.com
+---
+sudo certbot --nginx -d backend-mewell.biz.id -d www.backend-mewell.biz.id
+---
+sudo apt update
+sudo apt install nginx
+
+sudo nano /etc/nginx/sites-available/backend-mewell.biz.id
+
+```
+server {
+    listen 80;
+    server_name backend-mewell.biz.id www.backend-mewell.biz.id;
+
+    location / {
+        proxy_pass http://34.101.165.0:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+```
+
+```
+sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+```
+sudo apt update
+sudo apt install certbot python3-certbot-nginx
+
+```
+
+```
+sudo certbot --nginx -d backend-mewell.biz.id -d www.backend-mewell.biz.id
+```

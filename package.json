@@ -4,8 +4,9 @@
   "description": "Mental Hack API",
   "main": "index.js",
   "scripts": {
-    "start": "node app",
+    "start": "set NODE_ENV=production&& node app.js",
     "dev": "nodemon app"
+
   },
   "repository": {
     "type": "git",
