@@ -190,7 +190,7 @@ module.exports = {
 
       const originalContent = video.content;
       if (content) {
-        checkAndDeleteMissingImages(originalContent, $.html());
+        checkAndDeleteMissingImages(originalContent, updatedVideo.content);
       }
 
       await Video.findByIdAndUpdate(videoId, updatedVideo);
